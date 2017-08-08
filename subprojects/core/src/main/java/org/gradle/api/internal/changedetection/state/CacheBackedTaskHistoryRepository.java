@@ -56,7 +56,7 @@ public class CacheBackedTaskHistoryRepository implements TaskHistoryRepository {
     public History getHistory(final TaskInternal task) {
         final LazyTaskExecution previousExecution = loadPreviousExecution(task);
         final LazyTaskExecution currentExecution = new LazyTaskExecution(buildInvocationScopeId.getId(), snapshotRepository);
-        currentExecution.setOutputPropertyNamesForCacheKey(getOutputPropertyNamesForCacheKey(task));
+        currentExecution.setOutputPropertyNamesForCacheKey(ImmutableSet.copyOf(getOutputPropertyNamesForCacheKey(task)));
         currentExecution.setDeclaredOutputFilePaths(getDeclaredOutputFilePaths(task));
 
         return new History() {

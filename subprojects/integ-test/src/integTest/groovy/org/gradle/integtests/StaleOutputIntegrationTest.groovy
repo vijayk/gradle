@@ -309,6 +309,30 @@ class StaleOutputIntegrationTest extends AbstractIntegrationSpec {
         fixture.taskCreatedOutputs()
     }
 
+    def "outputs are evaluated 9 times"() {
+        buildScript """
+            class TestTask extends DefaultTask {
+                int count = 0
+                @OutputFile
+                File getOutputFile() {
+                    count++
+                    println "Evaluating outputFile \$count"
+                    new Exception().printStackTrace()
+                    assert count < 10
+                    return project.file("foo.bar")
+                }
+            }
+            
+            task test(type: TestTask)
+        """.stripIndent()
+        executer.withStackTraceChecksDisabled()
+        executer.withBuildCacheEnabled()
+
+        expect:
+        succeeds("test")
+
+    }
+
     class TaskWithSources {
         String outputDir = "build/output"
         File inputFile = file('src/data/input.txt')
