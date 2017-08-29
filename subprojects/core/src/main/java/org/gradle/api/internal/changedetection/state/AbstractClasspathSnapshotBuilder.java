@@ -18,17 +18,12 @@ package org.gradle.api.internal.changedetection.state;
 
 import com.google.common.hash.HashCode;
 import org.gradle.api.GradleException;
-import org.gradle.api.UncheckedIOException;
 import org.gradle.api.internal.cache.StringInterner;
-import org.gradle.caching.internal.BuildCacheHasher;
 import org.gradle.caching.internal.DefaultBuildCacheHasher;
 import org.gradle.internal.FileUtils;
-import org.gradle.util.DeprecationLogger;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.zip.ZipException;
 
 public abstract class AbstractClasspathSnapshotBuilder implements VisitingFileCollectionSnapshotBuilder {
     protected final CollectingFileCollectionSnapshotBuilder builder;
@@ -43,7 +38,7 @@ public abstract class AbstractClasspathSnapshotBuilder implements VisitingFileCo
         this.cacheService = cacheService;
         this.stringInterner = stringInterner;
         this.classpathResourceHasher = classpathResourceHasher;
-        this.jarHasher = new JarHasher();
+        this.jarHasher = new JarHasher(classpathResourceHasher, stringInterner);
         DefaultBuildCacheHasher hasher = new DefaultBuildCacheHasher();
         jarHasher.appendConfigurationToHasher(hasher);
         this.jarHasherConfigurationHash = hasher.hash().asBytes();
@@ -79,46 +74,17 @@ public abstract class AbstractClasspathSnapshotBuilder implements VisitingFileCo
         }
     }
 
-    private void visitJar(RegularFileSnapshot jarFile) {
-        HashCode hash = cacheService.hashFile(jarFile, jarHasher, jarHasherConfigurationHash);
-        if (hash != null) {
-            builder.collectFileSnapshot(jarFile.withContentHash(hash));
-        }
+    protected RegularFileSnapshot normalizeJarHash(RegularFileSnapshot jarFile) {
+        return jarFile;
     }
 
-    private class JarHasher implements RegularFileHasher, ConfigurableNormalizer {
-        @Nullable
-        @Override
-        public HashCode hash(RegularFileSnapshot fileSnapshot) {
-            return hashJarContents(fileSnapshot);
-        }
-
-        @Override
-        public void appendConfigurationToHasher(BuildCacheHasher hasher) {
-            hasher.putString(getClass().getName());
-            classpathResourceHasher.appendConfigurationToHasher(hasher);
-        }
-
-        private HashCode hashJarContents(RegularFileSnapshot jarFile) {
-            try {
-                ClasspathEntrySnapshotBuilder classpathEntrySnapshotBuilder = newClasspathEntrySnapshotBuilder();
-                new ZipTree(jarFile).visit(classpathEntrySnapshotBuilder);
-                return classpathEntrySnapshotBuilder.getHash();
-            } catch (ZipException e) {
-                // ZipExceptions point to a problem with the Zip, we try to be lenient for now.
-                return hashMalformedZip(jarFile);
-            } catch (IOException e) {
-                // IOExceptions other than ZipException are failures.
-                throw new UncheckedIOException("Error snapshotting jar [" + jarFile.getName() + "]", e);
-            } catch (Exception e) {
-                // Other Exceptions can be thrown by invalid zips, too. See https://github.com/gradle/gradle/issues/1581.
-                return hashMalformedZip(jarFile);
+    private void visitJar(RegularFileSnapshot jarFile) {
+        RegularFileSnapshot fileSnapshot = normalizeJarHash(jarFile);
+        if (fileSnapshot != null) {
+            HashCode hash = cacheService.hashFile(fileSnapshot, jarHasher, jarHasherConfigurationHash);
+            if (hash != null) {
+                builder.collectFileSnapshot(jarFile.withContentHash(hash));
             }
-        }
-
-        private HashCode hashMalformedZip(FileSnapshot fileSnapshot) {
-            DeprecationLogger.nagUserWith("Malformed jar [" + fileSnapshot.getName() + "] found on classpath. Gradle 5.0 will no longer allow malformed jars on a classpath.");
-            return fileSnapshot.getContent().getContentMd5();
         }
     }
 

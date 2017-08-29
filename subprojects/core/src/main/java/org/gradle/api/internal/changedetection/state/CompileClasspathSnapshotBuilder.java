@@ -16,7 +16,9 @@
 
 package org.gradle.api.internal.changedetection.state;
 
+import com.google.common.hash.HashCode;
 import org.gradle.api.internal.cache.StringInterner;
+import org.gradle.caching.internal.DefaultBuildCacheHasher;
 
 /**
  * Builds a {@link FileCollectionSnapshot} for a compile classpath.
@@ -24,11 +26,26 @@ import org.gradle.api.internal.cache.StringInterner;
  * We only take class files in jar files and class files in directories into account.
  */
 public class CompileClasspathSnapshotBuilder extends AbstractClasspathSnapshotBuilder {
-    public CompileClasspathSnapshotBuilder(ResourceHasher classpathResourceHasher, ResourceSnapshotterCacheService cacheService, StringInterner stringInterner) {
+    private final ResourceSnapshotterCacheService cacheService;
+    private final JarHasher runtimeJarHasher;
+    private final byte[] runtimeJarHasherConfigurationHash;
+
+    public CompileClasspathSnapshotBuilder(ResourceHasher classpathResourceHasher, ResourceHasher runtimeClasspathHasher, ResourceSnapshotterCacheService cacheService, StringInterner stringInterner) {
         super(classpathResourceHasher, cacheService, stringInterner);
+        this.cacheService = cacheService;
+        this.runtimeJarHasher = new JarHasher(runtimeClasspathHasher, stringInterner);
+        DefaultBuildCacheHasher defaultBuildCacheHasher = new DefaultBuildCacheHasher();
+        runtimeClasspathHasher.appendConfigurationToHasher(defaultBuildCacheHasher);
+        this.runtimeJarHasherConfigurationHash = defaultBuildCacheHasher.hash().asBytes();
     }
 
     @Override
     protected void visitNonJar(RegularFileSnapshot file) {
+    }
+
+    @Override
+    protected RegularFileSnapshot normalizeJarHash(RegularFileSnapshot jarFile) {
+        HashCode hashCode = cacheService.hashFile(jarFile, runtimeJarHasher, runtimeJarHasherConfigurationHash);
+        return hashCode == null ? null : jarFile.withContentHash(hashCode);
     }
 }
