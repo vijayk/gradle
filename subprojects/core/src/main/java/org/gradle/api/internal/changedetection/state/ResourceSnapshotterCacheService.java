@@ -31,7 +31,7 @@ public class ResourceSnapshotterCacheService {
         this.persistentCache = persistentCache;
     }
 
-    public HashCode hashFile(RegularFileSnapshot fileSnapshot, RegularFileHasher hasher, byte[] configurationHash) {
+    public HashCode hashFile(FileSnapshot fileSnapshot, RegularFileHasher hasher, byte[] configurationHash) {
         HashCode resourceHashCacheKey = resourceHashCacheKey(fileSnapshot, configurationHash);
 
         HashCode resourceHash = persistentCache.get(resourceHashCacheKey);
@@ -52,7 +52,7 @@ public class ResourceSnapshotterCacheService {
         return resourceHash;
     }
 
-    private HashCode resourceHashCacheKey(RegularFileSnapshot fileSnapshot, byte[] configurationHash) {
+    private HashCode resourceHashCacheKey(FileSnapshot fileSnapshot, byte[] configurationHash) {
         BuildCacheHasher hasher = new DefaultBuildCacheHasher();
         hasher.putBytes(configurationHash);
         hasher.putHash(fileSnapshot.getContent().getContentMd5());

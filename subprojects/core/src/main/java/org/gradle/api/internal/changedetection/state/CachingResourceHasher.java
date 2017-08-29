@@ -43,7 +43,7 @@ public class CachingResourceHasher implements ResourceHasher {
     }
 
     @Override
-    public HashCode hash(RegularFileSnapshot fileSnapshot) {
+    public HashCode hash(FileSnapshot fileSnapshot) {
         return resourceSnapshotterCacheService.hashFile(fileSnapshot, delegate, delegateConfigurationHash);
     }
 

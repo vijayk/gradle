@@ -21,6 +21,6 @@ import java.io.InputStream;
 import java.util.zip.ZipEntry;
 
 public interface ResourceWithContentsVisitor {
-    void visitFileSnapshot(RegularFileSnapshot fileSnapshot) throws IOException;
+    void visitFileSnapshot(FileSnapshot fileSnapshot) throws IOException;
     void visitZipFileEntry(ZipEntry zipEntry, InputStream zipInput) throws IOException;
 }

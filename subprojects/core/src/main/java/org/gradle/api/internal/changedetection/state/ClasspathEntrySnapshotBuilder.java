@@ -58,7 +58,7 @@ public class ClasspathEntrySnapshotBuilder implements ResourceWithContentsVisito
     }
 
     @Override
-    public void visitFileSnapshot(RegularFileSnapshot file) {
+    public void visitFileSnapshot(FileSnapshot file) {
         HashCode hash = classpathResourceHasher.hash(file);
         if (hash != null) {
             normalizedSnapshots.put(file.getPath(), RELATIVE.getNormalizedSnapshot(file.withContentHash(hash), stringInterner));

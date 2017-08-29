@@ -45,7 +45,7 @@ public class IgnoringResourceHasher implements ResourceHasher {
     }
 
     @Override
-    public HashCode hash(RegularFileSnapshot fileSnapshot) {
+    public HashCode hash(FileSnapshot fileSnapshot) {
         if (shouldBeIgnored(fileSnapshot.getRelativePath())) {
             return null;
         }

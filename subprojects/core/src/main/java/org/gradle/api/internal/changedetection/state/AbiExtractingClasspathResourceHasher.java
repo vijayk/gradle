@@ -50,7 +50,7 @@ public class AbiExtractingClasspathResourceHasher implements ResourceHasher {
     }
 
     @Override
-    public HashCode hash(RegularFileSnapshot fileSnapshot) {
+    public HashCode hash(FileSnapshot fileSnapshot) {
         String name = fileSnapshot.getName();
         if (!isClassFile(name)) {
             return null;

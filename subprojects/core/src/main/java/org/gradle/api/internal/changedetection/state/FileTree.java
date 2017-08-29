@@ -32,8 +32,7 @@ public class FileTree implements ResourceTree {
     public void visit(ResourceWithContentsVisitor visitor) throws IOException {
         for (FileSnapshot descendant : descendants) {
             if (descendant.getType() == FileType.RegularFile) {
-                RegularFileSnapshot fileSnapshot = (RegularFileSnapshot) descendant;
-                visitor.visitFileSnapshot(fileSnapshot);
+                visitor.visitFileSnapshot(descendant);
             }
         }
     }

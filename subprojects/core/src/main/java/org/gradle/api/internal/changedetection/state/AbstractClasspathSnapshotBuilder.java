@@ -79,7 +79,7 @@ public abstract class AbstractClasspathSnapshotBuilder implements VisitingFileCo
         }
     }
 
-    private void visitJar(RegularFileSnapshot jarFile) {
+    private void visitJar(FileSnapshot jarFile) {
         HashCode hash = cacheService.hashFile(jarFile, jarHasher, jarHasherConfigurationHash);
         if (hash != null) {
             builder.collectFileSnapshot(jarFile.withContentHash(hash));
@@ -89,7 +89,7 @@ public abstract class AbstractClasspathSnapshotBuilder implements VisitingFileCo
     private class JarHasher implements RegularFileHasher, ConfigurableNormalizer {
         @Nullable
         @Override
-        public HashCode hash(RegularFileSnapshot fileSnapshot) {
+        public HashCode hash(FileSnapshot fileSnapshot) {
             return hashJarContents(fileSnapshot);
         }
 
@@ -99,7 +99,7 @@ public abstract class AbstractClasspathSnapshotBuilder implements VisitingFileCo
             classpathResourceHasher.appendConfigurationToHasher(hasher);
         }
 
-        private HashCode hashJarContents(RegularFileSnapshot jarFile) {
+        private HashCode hashJarContents(FileSnapshot jarFile) {
             try {
                 ClasspathEntrySnapshotBuilder classpathEntrySnapshotBuilder = newClasspathEntrySnapshotBuilder();
                 new ZipTree(jarFile).visit(classpathEntrySnapshotBuilder);

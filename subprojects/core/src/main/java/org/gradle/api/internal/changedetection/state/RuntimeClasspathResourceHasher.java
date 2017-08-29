@@ -34,7 +34,7 @@ import java.util.zip.ZipEntry;
  */
 public class RuntimeClasspathResourceHasher implements ResourceHasher {
     @Override
-    public HashCode hash(RegularFileSnapshot fileSnapshot) {
+    public HashCode hash(FileSnapshot fileSnapshot) {
         return fileSnapshot.getContent().getContentMd5();
     }
 

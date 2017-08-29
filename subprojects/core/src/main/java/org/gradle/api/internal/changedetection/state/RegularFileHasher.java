@@ -25,5 +25,5 @@ public interface RegularFileHasher {
      * Returns {@code null} if the file should be ignored.
      */
     @Nullable
-    HashCode hash(RegularFileSnapshot fileSnapshot);
+    HashCode hash(FileSnapshot fileSnapshot);
 }
