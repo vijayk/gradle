@@ -25,6 +25,7 @@ import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 
 public class DefaultStreamHasher implements StreamHasher {
+    private static final int BUFFER_LENGTH = 8192;
     private final Queue<byte[]> buffers = new ArrayBlockingQueue<byte[]>(16);
     private final ContentHasherFactory hasherFactory;
 
@@ -55,8 +56,13 @@ public class DefaultStreamHasher implements StreamHasher {
                 if (nread < 0) {
                     break;
                 }
-                outputStream.write(buffer, 0, nread);
-                hasher.putBytes(buffer, 0, nread);
+                if (nread == BUFFER_LENGTH) {
+                    outputStream.write(buffer);
+                    hasher.putBytes(buffer);
+                } else {
+                    outputStream.write(buffer, 0, nread);
+                    hasher.putBytes(buffer, 0, nread);
+                }
             }
             return hasher.hash();
         } finally {
@@ -72,7 +78,7 @@ public class DefaultStreamHasher implements StreamHasher {
     private byte[] takeBuffer() {
         byte[] buffer = buffers.poll();
         if (buffer == null) {
-            buffer = new byte[8192];
+            buffer = new byte[BUFFER_LENGTH];
         }
         return buffer;
     }
