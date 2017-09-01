@@ -215,7 +215,7 @@ class TaskOutputCachingJavaPerformanceTest extends AbstractTaskOutputCacheJavaPe
         where:
         // We only test the multiproject here since for the monolitic project we would have no cache hits.
         // This would mean we actually would test incremental compilation.
-        [testProject, tasks] << [[LARGE_JAVA_MULTI_PROJECT, 'assemble']]
+        [testProject, tasks] << [[LARGE_JAVA_MULTI_PROJECT, 'compileJava']]
     }
 
     def "clean #tasks for non-abi change on #testProject with local cache (parallel: true)"() {
@@ -235,7 +235,7 @@ class TaskOutputCachingJavaPerformanceTest extends AbstractTaskOutputCacheJavaPe
         where:
         // We only test the multiproject here since for the monolitic project we would have no cache hits.
         // This would mean we actually would test incremental compilation.
-        [testProject, tasks] << [[LARGE_JAVA_MULTI_PROJECT, 'assemble']]
+        [testProject, tasks] << [[LARGE_JAVA_MULTI_PROJECT, 'compileJava']]
     }
 
     private BuildExperimentListenerAdapter cleanLocalCache() {
