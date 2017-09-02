@@ -17,25 +17,26 @@ package org.gradle.api.internal.changedetection.state;
 
 import org.gradle.cache.PersistentIndexedCache;
 import org.gradle.internal.id.IdGenerator;
-import org.gradle.internal.id.RandomLongIdGenerator;
 import org.gradle.internal.serialize.Serializer;
 
-public class CacheBackedFileSnapshotRepository implements FileSnapshotRepository {
-    private final PersistentIndexedCache<Long, FileCollectionSnapshot> cache;
-    private IdGenerator<Long> idGenerator = new RandomLongIdGenerator();
+import java.util.UUID;
 
-    public CacheBackedFileSnapshotRepository(TaskHistoryStore cacheAccess, Serializer<FileCollectionSnapshot> serializer, IdGenerator<Long> idGenerator) {
+public class CacheBackedFileSnapshotRepository implements FileSnapshotRepository {
+    private final PersistentIndexedCache<UUID, FileCollectionSnapshot> cache;
+    private final IdGenerator<UUID> idGenerator;
+
+    public CacheBackedFileSnapshotRepository(TaskHistoryStore cacheAccess, Serializer<FileCollectionSnapshot> serializer, IdGenerator<UUID> idGenerator) {
         this.idGenerator = idGenerator;
-        cache = cacheAccess.createCache("fileSnapshots", Long.class, serializer, 12000, false);
+        cache = cacheAccess.createCache("fileSnapshots", UUID.class, serializer, 12000, false);
     }
 
-    public Long add(FileCollectionSnapshot snapshot) {
-        Long id = idGenerator.generateId();
+    public UUID add(FileCollectionSnapshot snapshot) {
+        UUID id = idGenerator.generateId();
         cache.put(id, snapshot);
         return id;
     }
 
-    public FileCollectionSnapshot get(Long id) {
+    public FileCollectionSnapshot get(UUID id) {
         FileCollectionSnapshot snapshot = cache.get(id);
         if (snapshot == null) {
             throw new IllegalArgumentException("Cannot find snapshot for id: " + id);
@@ -43,7 +44,7 @@ public class CacheBackedFileSnapshotRepository implements FileSnapshotRepository
         return snapshot;
     }
 
-    public void remove(Long id) {
+    public void remove(UUID id) {
         cache.remove(id);
     }
 }

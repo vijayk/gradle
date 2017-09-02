@@ -22,6 +22,8 @@ import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.ImmutableSortedSet;
 import org.gradle.internal.id.UniqueId;
 
+import java.util.UUID;
+
 /**
  * Immutable snapshot of the state of a task when it was executed.
  */
@@ -33,11 +35,11 @@ public class TaskExecutionSnapshot {
     private final ImmutableSortedMap<String, ValueSnapshot> inputProperties;
     private final ImmutableSortedSet<String> cacheableOutputProperties;
     private final ImmutableSet<String> declaredOutputFilePaths;
-    private final ImmutableSortedMap<String, Long> inputFilesSnapshotIds;
-    private final ImmutableSortedMap<String, Long> outputFilesSnapshotIds;
-    private final Long discoveredFilesSnapshotId;
+    private final ImmutableSortedMap<String, UUID> inputFilesSnapshotIds;
+    private final ImmutableSortedMap<String, UUID> outputFilesSnapshotIds;
+    private final UUID discoveredFilesSnapshotId;
 
-    public TaskExecutionSnapshot(boolean successful, UniqueId buildInvocationId, ImplementationSnapshot taskImplementation, ImmutableList<ImplementationSnapshot> taskActionsImplementations, ImmutableSortedSet<String> cacheableOutputProperties, ImmutableSet<String> declaredOutputFilePaths, ImmutableSortedMap<String, ValueSnapshot> inputProperties, ImmutableSortedMap<String, Long> inputFilesSnapshotIds, Long discoveredFilesSnapshotId, ImmutableSortedMap<String, Long> outputFilesSnapshotIds) {
+    public TaskExecutionSnapshot(boolean successful, UniqueId buildInvocationId, ImplementationSnapshot taskImplementation, ImmutableList<ImplementationSnapshot> taskActionsImplementations, ImmutableSortedSet<String> cacheableOutputProperties, ImmutableSet<String> declaredOutputFilePaths, ImmutableSortedMap<String, ValueSnapshot> inputProperties, ImmutableSortedMap<String, UUID> inputFilesSnapshotIds, UUID discoveredFilesSnapshotId, ImmutableSortedMap<String, UUID> outputFilesSnapshotIds) {
         this.successful = successful;
         this.buildInvocationId = buildInvocationId;
         this.taskImplementation = taskImplementation;
@@ -74,11 +76,11 @@ public class TaskExecutionSnapshot {
         return declaredOutputFilePaths;
     }
 
-    public Long getDiscoveredFilesSnapshotId() {
+    public UUID getDiscoveredFilesSnapshotId() {
         return discoveredFilesSnapshotId;
     }
 
-    public ImmutableSortedMap<String, Long> getInputFilesSnapshotIds() {
+    public ImmutableSortedMap<String, UUID> getInputFilesSnapshotIds() {
         return inputFilesSnapshotIds;
     }
 
@@ -86,7 +88,7 @@ public class TaskExecutionSnapshot {
         return inputProperties;
     }
 
-    public ImmutableSortedMap<String, Long> getOutputFilesSnapshotIds() {
+    public ImmutableSortedMap<String, UUID> getOutputFilesSnapshotIds() {
         return outputFilesSnapshotIds;
     }
 }

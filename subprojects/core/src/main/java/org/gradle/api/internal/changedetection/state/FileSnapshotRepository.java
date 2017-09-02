@@ -15,10 +15,12 @@
  */
 package org.gradle.api.internal.changedetection.state;
 
+import java.util.UUID;
+
 public interface FileSnapshotRepository {
-    FileCollectionSnapshot get(Long id);
+    FileCollectionSnapshot get(UUID id);
 
-    Long add(FileCollectionSnapshot snapshot);
+    UUID add(FileCollectionSnapshot snapshot);
 
-    void remove(Long id);
+    void remove(UUID id);
 }

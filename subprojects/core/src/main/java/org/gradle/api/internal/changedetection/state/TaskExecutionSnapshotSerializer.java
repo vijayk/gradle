@@ -29,6 +29,7 @@ import org.gradle.internal.serialize.Encoder;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.UUID;
 
 public class TaskExecutionSnapshotSerializer extends AbstractSerializer<TaskExecutionSnapshot> {
     private final InputPropertiesSerializer inputPropertiesSerializer;
@@ -44,9 +45,9 @@ public class TaskExecutionSnapshotSerializer extends AbstractSerializer<TaskExec
 
         UniqueId buildId = UniqueId.from(decoder.readString());
 
-        ImmutableSortedMap<String, Long> inputFilesSnapshotIds = readSnapshotIds(decoder);
-        ImmutableSortedMap<String, Long> outputFilesSnapshotIds = readSnapshotIds(decoder);
-        Long discoveredFilesSnapshotId = decoder.readLong();
+        ImmutableSortedMap<String, UUID> inputFilesSnapshotIds = readSnapshotIds(decoder);
+        ImmutableSortedMap<String, UUID> outputFilesSnapshotIds = readSnapshotIds(decoder);
+        UUID discoveredFilesSnapshotId = UUID.fromString(decoder.readString());
 
         ImplementationSnapshot taskImplementation = readImplementation(decoder);
 
@@ -94,7 +95,7 @@ public class TaskExecutionSnapshotSerializer extends AbstractSerializer<TaskExec
         encoder.writeString(execution.getBuildInvocationId().asString());
         writeSnapshotIds(encoder, execution.getInputFilesSnapshotIds());
         writeSnapshotIds(encoder, execution.getOutputFilesSnapshotIds());
-        encoder.writeLong(execution.getDiscoveredFilesSnapshotId());
+        encoder.writeString(execution.getDiscoveredFilesSnapshotId().toString());
         writeImplementation(encoder, execution.getTaskImplementation());
         encoder.writeSmallInt(execution.getTaskActionsImplementations().size());
         for (ImplementationSnapshot actionImpl : execution.getTaskActionsImplementations()) {
@@ -127,22 +128,22 @@ public class TaskExecutionSnapshotSerializer extends AbstractSerializer<TaskExec
         }
     }
 
-    private static ImmutableSortedMap<String, Long> readSnapshotIds(Decoder decoder) throws IOException {
+    private static ImmutableSortedMap<String, UUID> readSnapshotIds(Decoder decoder) throws IOException {
         int count = decoder.readSmallInt();
-        ImmutableSortedMap.Builder<String, Long> builder = ImmutableSortedMap.naturalOrder();
+        ImmutableSortedMap.Builder<String, UUID> builder = ImmutableSortedMap.naturalOrder();
         for (int snapshotIdx = 0; snapshotIdx < count; snapshotIdx++) {
             String property = decoder.readString();
-            long id = decoder.readLong();
+            UUID id = UUID.fromString(decoder.readString());
             builder.put(property, id);
         }
         return builder.build();
     }
 
-    private static void writeSnapshotIds(Encoder encoder, Map<String, Long> ids) throws IOException {
+    private static void writeSnapshotIds(Encoder encoder, Map<String, UUID> ids) throws IOException {
         encoder.writeSmallInt(ids.size());
-        for (Map.Entry<String, Long> entry : ids.entrySet()) {
+        for (Map.Entry<String, UUID> entry : ids.entrySet()) {
             encoder.writeString(entry.getKey());
-            encoder.writeLong(entry.getValue());
+            encoder.writeString(entry.getValue().toString());
         }
     }
 }

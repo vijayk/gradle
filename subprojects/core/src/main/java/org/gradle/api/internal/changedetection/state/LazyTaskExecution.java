@@ -24,11 +24,12 @@ import org.gradle.api.internal.OverlappingOutputs;
 import org.gradle.internal.id.UniqueId;
 
 import java.util.Map;
+import java.util.UUID;
 
 public class LazyTaskExecution extends TaskExecution {
-    private ImmutableSortedMap<String, Long> inputFilesSnapshotIds;
-    private ImmutableSortedMap<String, Long> outputFilesSnapshotIds;
-    private Long discoveredFilesSnapshotId;
+    private ImmutableSortedMap<String, UUID> inputFilesSnapshotIds;
+    private ImmutableSortedMap<String, UUID> outputFilesSnapshotIds;
+    private UUID discoveredFilesSnapshotId;
     private final FileSnapshotRepository snapshotRepository;
     private ImmutableSortedMap<String, FileCollectionSnapshot> inputFilesSnapshot;
     private ImmutableSortedMap<String, FileCollectionSnapshot> outputFilesSnapshot;
@@ -134,11 +135,11 @@ public class LazyTaskExecution extends TaskExecution {
         return outputFilesSnapshot;
     }
 
-    private ImmutableSortedMap<String, FileCollectionSnapshot> loadSnapshot(Map<String, Long> snapshotIds) {
+    private ImmutableSortedMap<String, FileCollectionSnapshot> loadSnapshot(Map<String, UUID> snapshotIds) {
         ImmutableSortedMap.Builder<String, FileCollectionSnapshot> builder = ImmutableSortedMap.naturalOrder();
-        for (Map.Entry<String, Long> entry : snapshotIds.entrySet()) {
+        for (Map.Entry<String, UUID> entry : snapshotIds.entrySet()) {
             String propertyName = entry.getKey();
-            Long snapshotId = entry.getValue();
+            UUID snapshotId = entry.getValue();
             FileCollectionSnapshot fileCollectionSnapshot = snapshotRepository.get(snapshotId);
             builder.put(propertyName, fileCollectionSnapshot);
         }
@@ -178,12 +179,12 @@ public class LazyTaskExecution extends TaskExecution {
         }
     }
 
-    private ImmutableSortedMap<String, Long> storeSnapshot(Map<String, FileCollectionSnapshot> snapshot) {
-        ImmutableSortedMap.Builder<String, Long> builder = ImmutableSortedMap.naturalOrder();
+    private ImmutableSortedMap<String, UUID> storeSnapshot(Map<String, FileCollectionSnapshot> snapshot) {
+        ImmutableSortedMap.Builder<String, UUID> builder = ImmutableSortedMap.naturalOrder();
         for (Map.Entry<String, FileCollectionSnapshot> entry : snapshot.entrySet()) {
             String propertyName = entry.getKey();
             FileCollectionSnapshot fileCollectionSnapshot = entry.getValue();
-            Long snapshotId = snapshotRepository.add(fileCollectionSnapshot);
+            UUID snapshotId = snapshotRepository.add(fileCollectionSnapshot);
             builder.put(propertyName, snapshotId);
         }
         return builder.build();
@@ -204,8 +205,8 @@ public class LazyTaskExecution extends TaskExecution {
         }
     }
 
-    private void removeUnnecessarySnapshot(Map<String, Long> snapshot) {
-        for (Long id : snapshot.values()) {
+    private void removeUnnecessarySnapshot(Map<String, UUID> snapshot) {
+        for (UUID id : snapshot.values()) {
             snapshotRepository.remove(id);
         }
     }

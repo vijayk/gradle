@@ -71,7 +71,7 @@ import org.gradle.internal.cleanup.BuildOutputCleanupRegistry;
 import org.gradle.internal.concurrent.ExecutorFactory;
 import org.gradle.internal.concurrent.ParallelismConfigurationManager;
 import org.gradle.internal.event.ListenerManager;
-import org.gradle.internal.id.RandomLongIdGenerator;
+import org.gradle.internal.id.UUIDGenerator;
 import org.gradle.internal.operations.BuildOperationExecutor;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.internal.scan.config.BuildScanPluginApplied;
@@ -177,7 +177,7 @@ public class TaskExecutionServices {
             cacheAccess,
             new CacheBackedFileSnapshotRepository(cacheAccess,
                 serializerRegistry.build(FileCollectionSnapshot.class),
-                new RandomLongIdGenerator()
+                new UUIDGenerator()
             ),
             stringInterner,
             classLoaderHierarchyHasher,
