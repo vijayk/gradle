@@ -24,7 +24,7 @@ archivesBaseName = 'gradle'
 
 buildTypes {
     sanityCheck {
-        tasks "intTestImage", "doc:checkstyleApi", "codeQuality", "docs:check", "distribution:checkBinaryCompatibility", "javadocAll"
+        tasks "classes", "doc:checkstyleApi", "codeQuality", "docs:check", "distribution:checkBinaryCompatibility", "javadocAll"
     }
 
     // Used by the first phase of the build pipeline, running only last version on multiversion - tests
@@ -224,6 +224,9 @@ configurations {
     coreRuntime {
         visible = false
     }
+    coreRuntimeExtensions {
+        visible = false
+    }
     externalModules {
         visible = false
     }
@@ -252,8 +255,8 @@ def patchedExternalModules = files({ -> fileTree(patchedExternalModulesDir).file
 patchedExternalModules.builtBy 'patchExternalModules'
 
 dependencies {
-    externalModules 'org.gradle:gradle-kotlin-dsl:0.11.1'
-    externalModules 'org.gradle:gradle-kotlin-dsl-tooling-builders:0.11.1'
+    externalModules "org.gradle:gradle-kotlin-dsl:${versions.gradle_kotlin_dsl}"
+    externalModules "org.gradle:gradle-kotlin-dsl-tooling-builders:${versions.gradle_kotlin_dsl}"
     coreRuntime project(':launcher')
     coreRuntime project(':runtimeApiInfo')
     runtime project(':wrapper')
@@ -264,6 +267,10 @@ dependencies {
     gradlePlugins project(':workers')
     gradlePlugins project(':dependencyManagement')
     gradlePlugins project(':testKit')
+
+    coreRuntimeExtensions project(':dependencyManagement') //See: DynamicModulesClassPathProvider.GRADLE_EXTENSION_MODULES
+    coreRuntimeExtensions project(':pluginUse')
+    coreRuntimeExtensions project(':workers')
 }
 
 import org.gradle.modules.PatchExternalModules
@@ -312,7 +319,11 @@ task installAll(type: Install) {
     installDirPropertyName = 'gradle_installPath'
 }
 
-apply from: "gradle/intTestImage.gradle"
+subprojects {
+    if (project in groovyProjects) {
+        apply from: "$rootDir/gradle/intTestImage.gradle"
+    }
+}
 
 // Generate a report showing which tests in a subproject are leaving
 // files around.

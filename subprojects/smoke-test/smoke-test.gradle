@@ -18,6 +18,15 @@ dependencies {
     smokeTestCompile project(':testKit')
     smokeTestCompile project(":internalIntegTesting")
     smokeTestCompile libraries.spock
+
+    smokeTestRuntimeOnly "org.gradle:gradle-kotlin-dsl:${versions.gradle_kotlin_dsl}"
+    smokeTestRuntimeOnly project(':codeQuality')
+    smokeTestRuntimeOnly project(':ide')
+    smokeTestRuntimeOnly project(':ivy')
+    smokeTestRuntimeOnly project(':jacoco')
+    smokeTestRuntimeOnly project(':maven')
+    smokeTestRuntimeOnly project(':plugins')
+    smokeTestRuntimeOnly project(':toolingApiBuilders')
 }
 
 processSmokeTestResources {

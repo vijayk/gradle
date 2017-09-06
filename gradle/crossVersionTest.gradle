@@ -37,7 +37,6 @@ crossVersionTestTasks.all { CrossVersionTest task ->
     group = "verification"
     testClassesDirs = sourceSets.crossVersionTest.output.classesDirs
     classpath = sourceSets.crossVersionTest.runtimeClasspath
-    requiresBinZip = true
     requiresLibsRepo = true
 }
 
