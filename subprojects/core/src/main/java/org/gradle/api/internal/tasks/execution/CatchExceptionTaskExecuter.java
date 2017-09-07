@@ -20,8 +20,11 @@ import org.gradle.api.internal.TaskInternal;
 import org.gradle.api.internal.tasks.TaskExecuter;
 import org.gradle.api.internal.tasks.TaskExecutionContext;
 import org.gradle.api.internal.tasks.TaskStateInternal;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CatchExceptionTaskExecuter implements TaskExecuter {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CatchExceptionTaskExecuter.class);
     private final TaskExecuter delegate;
 
     public CatchExceptionTaskExecuter(TaskExecuter delegate) {
@@ -33,6 +36,7 @@ public class CatchExceptionTaskExecuter implements TaskExecuter {
         try {
             delegate.execute(task, state, context);
         } catch (RuntimeException e) {
+            LOGGER.error("" + task + " failed: {}", e.getMessage());
             state.setOutcome(e);
         }
     }
