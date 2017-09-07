@@ -126,7 +126,6 @@ public class CacheBackedTaskHistoryRepository implements TaskHistoryRepository {
             @Override
             public void persist() {
                 persistCurrentExecution();
-                cleanupPreviousExecution();
             }
 
             private void cleanupPreviousExecution() {
