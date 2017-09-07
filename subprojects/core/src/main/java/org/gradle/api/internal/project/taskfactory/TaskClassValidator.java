@@ -43,7 +43,7 @@ public class TaskClassValidator implements TaskValidator {
     public void addInputsAndOutputs(final TaskInternal task) {
         task.addValidator(this);
         for (TaskPropertyInfo property : annotatedProperties) {
-            property.getConfigureAction().update(task, new FutureValue(property, task));
+            property.getConfigureAction().update(task, property.getName(), new FutureValue(property, task));
         }
     }
 

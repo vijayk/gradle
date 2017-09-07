@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 the original author or authors.
+ * Copyright 2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.gradle.api.internal.project.taskfactory;
 
-import org.gradle.api.internal.TaskInternal;
+import java.util.Collection;
 
-import java.util.concurrent.Callable;
+public interface InputOutputPropertyValue {
+    Object getValue();
 
-public interface UpdateAction {
-    void update(TaskInternal task, String propertyName, Callable<Object> futureValue);
+    void checkNotNull(String propertyName, Collection<String> messages);
+
+    void checkValid(String propertyName, Collection<String> messages);
 }

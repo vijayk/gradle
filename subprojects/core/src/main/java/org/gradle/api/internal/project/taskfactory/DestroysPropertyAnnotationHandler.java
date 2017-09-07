@@ -32,7 +32,7 @@ public class DestroysPropertyAnnotationHandler implements PropertyAnnotationHand
     public void attachActions(TaskPropertyActionContext context) {
         context.setConfigureAction(new UpdateAction() {
             @Override
-            public void update(TaskInternal task, Callable<Object> futureValue) {
+            public void update(TaskInternal task, String propertyName, Callable<Object> futureValue) {
                 task.getDestroyables().files(futureValue);
             }
         });

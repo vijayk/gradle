@@ -36,9 +36,9 @@ public abstract class AbstractOutputPropertyAnnotationHandler implements Propert
         });
         context.setConfigureAction(new UpdateAction() {
             @Override
-            public void update(TaskInternal task, final Callable<Object> futureValue) {
+            public void update(TaskInternal task, String propertyName, final Callable<Object> futureValue) {
                 createPropertyBuilder(context, task, futureValue)
-                    .withPropertyName(context.getName())
+                    .withPropertyName(propertyName)
                     .optional(context.isOptional());
                 task.prependParallelSafeAction(new CreateOutputDirectoryTaskAction(context.getName(), futureValue));
             }
