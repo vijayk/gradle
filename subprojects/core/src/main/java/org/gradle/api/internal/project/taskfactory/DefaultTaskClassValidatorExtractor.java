@@ -20,47 +20,50 @@ import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
+import org.gradle.api.NonNullApi;
 import org.gradle.api.Task;
 import org.gradle.api.tasks.CacheableTask;
 
+import javax.annotation.Nullable;
 import java.util.ArrayDeque;
-import java.util.Arrays;
 import java.util.Queue;
 import java.util.Set;
 
+@NonNullApi
 public class DefaultTaskClassValidatorExtractor implements TaskClassValidatorExtractor {
 
     private final InputOutputPropertyExtractor inputOutputPropertyExtractor;
 
-    public DefaultTaskClassValidatorExtractor(PropertyAnnotationHandler... customAnnotationHandlers) {
-        this(Arrays.asList(customAnnotationHandlers));
+    public DefaultTaskClassValidatorExtractor(InputOutputPropertyExtractor inputOutputPropertyExtractor) {
+        this.inputOutputPropertyExtractor = inputOutputPropertyExtractor;
     }
 
-    public DefaultTaskClassValidatorExtractor(Iterable<? extends PropertyAnnotationHandler> customAnnotationHandlers) {
-        inputOutputPropertyExtractor = new InputOutputPropertyExtractor(customAnnotationHandlers);
-    }
-
-    @Override
-    public TaskClassValidator extractValidator(Class<? extends Task> type) {
+    public TaskClassValidator extractValidator(Class<? extends Task> type, @Nullable Task task) {
         boolean cacheable = type.isAnnotationPresent(CacheableTask.class);
         ImmutableSortedSet.Builder<TaskPropertyInfo> annotatedPropertiesBuilder = ImmutableSortedSet.naturalOrder();
         ImmutableList.Builder<TaskClassValidationMessage> validationMessages = ImmutableList.builder();
         Queue<TypeEntry> queue = new ArrayDeque<TypeEntry>();
-        queue.add(new TypeEntry(null, type));
+        queue.add(new TypeEntry(null, type, task));
         while (!queue.isEmpty()) {
             TypeEntry entry = queue.remove();
-            parseProperties(entry.parent, entry.type, annotatedPropertiesBuilder, validationMessages, cacheable, queue);
+            parseProperties(entry, annotatedPropertiesBuilder, validationMessages, cacheable, queue);
         }
         return new TaskClassValidator(annotatedPropertiesBuilder.build(), validationMessages.build(), cacheable);
     }
 
-    private <T> void parseProperties(final TaskPropertyInfo parent, Class<T> type, ImmutableSet.Builder<TaskPropertyInfo> annotatedProperties, final ImmutableCollection.Builder<TaskClassValidationMessage> validationMessages, final boolean cacheable, Queue<TypeEntry> queue) {
-        Set<InputOutputPropertyInfo> inputOutputPropertyInfos = inputOutputPropertyExtractor.extractProperties(type, cacheable);
+    @Override
+    public TaskClassValidator extractValidator(Class<? extends Task> type) {
+        return extractValidator(type, null);
+    }
+
+    private <T> void parseProperties(final TypeEntry entry, ImmutableSet.Builder<TaskPropertyInfo> annotatedProperties, final ImmutableCollection.Builder<TaskClassValidationMessage> validationMessages, final boolean cacheable, Queue<TypeEntry> queue) {
+        Set<InputOutputPropertyInfo> inputOutputPropertyInfos = inputOutputPropertyExtractor.extractProperties(entry.getType(), cacheable);
         for (InputOutputPropertyInfo inputOutputPropertyInfo : inputOutputPropertyInfos) {
-            TaskPropertyInfo property = new TaskPropertyInfo(parent, inputOutputPropertyInfo);
+            TaskPropertyInfo property = new TaskPropertyInfo(entry.getParent(), inputOutputPropertyInfo);
             annotatedProperties.add(property);
             if (inputOutputPropertyInfo.isNested()) {
-                queue.add(new TypeEntry(property, inputOutputPropertyInfo.getNestedType()));
+                Object value = entry.getInstance() == null ? null : inputOutputPropertyInfo.getValue(entry.getInstance()).getValue();
+                queue.add(new TypeEntry(property, inputOutputPropertyInfo.getNestedType(), value));
             }
             property.addValidationMessages(validationMessages);
         }
@@ -69,10 +72,27 @@ public class DefaultTaskClassValidatorExtractor implements TaskClassValidatorExt
     private static class TypeEntry {
         private final TaskPropertyInfo parent;
         private final Class<?> type;
+        private final Object instance;
 
-        public TypeEntry(TaskPropertyInfo parent, Class<?> type) {
+        public TypeEntry(@Nullable TaskPropertyInfo parent, Class<?> type, @Nullable Object instance) {
             this.parent = parent;
             this.type = type;
+            this.instance = instance;
         }
+
+        @Nullable
+        public TaskPropertyInfo getParent() {
+            return parent;
+        }
+
+        public Class<?> getType() {
+            return instance != null ? instance.getClass() : type;
+        }
+
+        @Nullable
+        public Object getInstance() {
+            return instance;
+        }
+
     }
 }

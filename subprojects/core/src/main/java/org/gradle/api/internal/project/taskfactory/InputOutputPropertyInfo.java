@@ -16,6 +16,7 @@
 
 package org.gradle.api.internal.project.taskfactory;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import org.gradle.api.NonNullApi;
 import org.gradle.api.internal.TaskInternal;
@@ -115,8 +116,8 @@ public class InputOutputPropertyInfo implements Comparable<InputOutputPropertyIn
         return nestedType != null;
     }
 
-    @Nullable
     public Class<?> getNestedType() {
+        Preconditions.checkNotNull(nestedType);
         return nestedType;
     }
 

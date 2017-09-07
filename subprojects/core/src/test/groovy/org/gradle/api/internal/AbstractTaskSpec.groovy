@@ -19,6 +19,7 @@ package org.gradle.api.internal
 import org.gradle.api.Action
 import org.gradle.api.Task
 import org.gradle.api.internal.project.taskfactory.AnnotationProcessingTaskFactory
+import org.gradle.api.internal.project.taskfactory.DefaultInputOutputPropertyExtractor
 import org.gradle.api.internal.project.taskfactory.DefaultTaskClassInfoStore
 import org.gradle.api.internal.project.taskfactory.DefaultTaskClassValidatorExtractor
 import org.gradle.api.internal.project.taskfactory.TaskFactory
@@ -33,7 +34,7 @@ import static org.junit.Assert.assertTrue
 
 class AbstractTaskSpec extends AbstractProjectBuilderSpec {
     def instantiator = TestUtil.instantiatorFactory().decorate()
-    def taskClassInfoStore = new DefaultTaskClassInfoStore(new DefaultTaskClassValidatorExtractor())
+    def taskClassInfoStore = new DefaultTaskClassInfoStore(new DefaultTaskClassValidatorExtractor(new DefaultInputOutputPropertyExtractor([])))
     private final AnnotationProcessingTaskFactory rootFactory = new AnnotationProcessingTaskFactory(taskClassInfoStore, new TaskFactory(new AsmBackedClassGenerator()))
 
     public static class TestTask extends AbstractTask {

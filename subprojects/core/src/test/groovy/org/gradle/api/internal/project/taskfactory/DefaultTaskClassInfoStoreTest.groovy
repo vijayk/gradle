@@ -34,7 +34,7 @@ import spock.lang.Specification
 import javax.inject.Inject
 
 class DefaultTaskClassInfoStoreTest extends Specification {
-    def taskClassInfoStore = new DefaultTaskClassInfoStore(new DefaultTaskClassValidatorExtractor())
+    def taskClassInfoStore = new DefaultTaskClassInfoStore(new DefaultTaskClassValidatorExtractor(new DefaultInputOutputPropertyExtractor([])))
 
     @SuppressWarnings("GrDeprecatedAPIUsage")
     private static class SimpleTask extends DefaultTask {

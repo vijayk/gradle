@@ -80,7 +80,7 @@ class DefaultTaskClassValidatorExtractorTest extends Specification {
     def "can use custom annotation processor"() {
         def configureAction = Mock(UpdateAction)
         def annotationHandler = new SearchPathAnnotationHandler(configureAction)
-        def extractor = new DefaultTaskClassValidatorExtractor(annotationHandler)
+        def extractor = new DefaultTaskClassValidatorExtractor(new DefaultInputOutputPropertyExtractor([annotationHandler]))
 
         expect:
         def validator = extractor.extractValidator(TaskWithCustomAnnotation)
@@ -103,7 +103,7 @@ class DefaultTaskClassValidatorExtractorTest extends Specification {
     }
 
     def "can make property internal and then make it into another type of property"() {
-        def extractor = new DefaultTaskClassValidatorExtractor()
+        def extractor = new DefaultTaskClassValidatorExtractor(new DefaultInputOutputPropertyExtractor([]))
 
         expect:
         extractor.extractValidator(TaskWithInputFile).annotatedProperties[0].propertyType == InputFile
@@ -125,7 +125,7 @@ class DefaultTaskClassValidatorExtractorTest extends Specification {
             }
         """
 
-        def extractor = new DefaultTaskClassValidatorExtractor()
+        def extractor = new DefaultTaskClassValidatorExtractor(new DefaultInputOutputPropertyExtractor([]))
 
         def parentValidator = extractor.extractValidator(parentTask)
         def childValidator = extractor.extractValidator(childTask)
@@ -154,7 +154,7 @@ class DefaultTaskClassValidatorExtractorTest extends Specification {
             }
         """
 
-        def extractor = new DefaultTaskClassValidatorExtractor()
+        def extractor = new DefaultTaskClassValidatorExtractor(new DefaultInputOutputPropertyExtractor([]))
 
         def parentValidator = extractor.extractValidator(parentTask)
         def childValidator = extractor.extractValidator(childTask)
@@ -183,7 +183,7 @@ class DefaultTaskClassValidatorExtractorTest extends Specification {
             }
         """
 
-        def extractor = new DefaultTaskClassValidatorExtractor()
+        def extractor = new DefaultTaskClassValidatorExtractor(new DefaultInputOutputPropertyExtractor([]))
 
         def parentValidator = extractor.extractValidator(parentTask)
         def childValidator = extractor.extractValidator(childTask)
@@ -206,7 +206,7 @@ class DefaultTaskClassValidatorExtractorTest extends Specification {
     // need to declare their @Classpath properties as @InputFiles as well
     @Issue("https://github.com/gradle/gradle/issues/913")
     def "@Classpath takes precedence over @InputFiles when both are declared on property"() {
-        def extractor = new DefaultTaskClassValidatorExtractor(new ClasspathPropertyAnnotationHandler())
+        def extractor = new DefaultTaskClassValidatorExtractor(new DefaultInputOutputPropertyExtractor([new ClasspathPropertyAnnotationHandler()]))
 
         when:
         def validator = extractor.extractValidator(ClasspathPropertyTask)
@@ -238,7 +238,7 @@ class DefaultTaskClassValidatorExtractorTest extends Specification {
 
     @Issue("https://github.com/gradle/gradle/issues/913")
     def "@Classpath does not take precedence over @InputFiles when overriding properties in child type"() {
-        def extractor = new DefaultTaskClassValidatorExtractor(new ClasspathPropertyAnnotationHandler())
+        def extractor = new DefaultTaskClassValidatorExtractor(new DefaultInputOutputPropertyExtractor([new ClasspathPropertyAnnotationHandler()]))
 
         when:
         def validator = extractor.extractValidator(OverridingClasspathPropertyTask)
@@ -254,7 +254,7 @@ class DefaultTaskClassValidatorExtractorTest extends Specification {
     }
 
     def "warns about non-annotated property"() {
-        def extractor = new DefaultTaskClassValidatorExtractor()
+        def extractor = new DefaultTaskClassValidatorExtractor(new DefaultInputOutputPropertyExtractor([]))
 
         when:
         def validator = extractor.extractValidator(TaskWithNonAnnotatedProperty)
@@ -275,7 +275,7 @@ class DefaultTaskClassValidatorExtractorTest extends Specification {
     }
 
     def "warns about both method and field having the same annotation"() {
-        def extractor = new DefaultTaskClassValidatorExtractor()
+        def extractor = new DefaultTaskClassValidatorExtractor(new DefaultInputOutputPropertyExtractor([]))
 
         when:
         def validator = extractor.extractValidator(TaskWithBothFieldAndGetterAnnotation)
@@ -296,7 +296,7 @@ class DefaultTaskClassValidatorExtractorTest extends Specification {
     }
 
     def "doesn't warn about both method and field having the same irrelevant annotation"() {
-        def extractor = new DefaultTaskClassValidatorExtractor()
+        def extractor = new DefaultTaskClassValidatorExtractor(new DefaultInputOutputPropertyExtractor([]))
 
         when:
         def validator = extractor.extractValidator(TaskWithBothFieldAndGetterAnnotationButIrrelevant)
@@ -316,7 +316,7 @@ class DefaultTaskClassValidatorExtractorTest extends Specification {
     }
 
     def "warns about conflicting property types being specified"() {
-        def extractor = new DefaultTaskClassValidatorExtractor()
+        def extractor = new DefaultTaskClassValidatorExtractor(new DefaultInputOutputPropertyExtractor([]))
 
         when:
         def validator = extractor.extractValidator(TaskWithConflictingPropertyTypes)
@@ -335,7 +335,7 @@ class DefaultTaskClassValidatorExtractorTest extends Specification {
     }
 
     def "doesn't warn about non-conflicting property types being specified"() {
-        def extractor = new DefaultTaskClassValidatorExtractor(new ClasspathPropertyAnnotationHandler())
+        def extractor = new DefaultTaskClassValidatorExtractor(new DefaultInputOutputPropertyExtractor([]))
 
         when:
         def validator = extractor.extractValidator(TaskWithNonConflictingPropertyTypes)
@@ -356,7 +356,7 @@ class DefaultTaskClassValidatorExtractorTest extends Specification {
     }
 
     def "warns about @Input being used on File and FileCollection properties"() {
-        def extractor = new DefaultTaskClassValidatorExtractor()
+        def extractor = new DefaultTaskClassValidatorExtractor(new DefaultInputOutputPropertyExtractor([]))
 
         when:
         def validator = extractor.extractValidator(TaskWithFileInput)
@@ -382,7 +382,7 @@ class DefaultTaskClassValidatorExtractorTest extends Specification {
     }
 
     def "warns about missing @PathSensitive annotation for @CacheableTask"() {
-        def extractor = new DefaultTaskClassValidatorExtractor()
+        def extractor = new DefaultTaskClassValidatorExtractor(new DefaultInputOutputPropertyExtractor([]))
 
         when:
         def validator = extractor.extractValidator(CacheableTaskWithoutPathSensitivity)

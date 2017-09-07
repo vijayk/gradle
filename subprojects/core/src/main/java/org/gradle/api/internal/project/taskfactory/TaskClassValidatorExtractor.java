@@ -16,8 +16,10 @@
 
 package org.gradle.api.internal.project.taskfactory;
 
+import org.gradle.api.NonNullApi;
 import org.gradle.api.Task;
 
+@NonNullApi
 public interface TaskClassValidatorExtractor {
     TaskClassValidator extractValidator(Class<? extends Task> type);
 }
