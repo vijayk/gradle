@@ -27,7 +27,6 @@ import org.gradle.api.tasks.CacheableTask;
 import javax.annotation.Nullable;
 import java.util.ArrayDeque;
 import java.util.Queue;
-import java.util.Set;
 
 @NonNullApi
 public class DefaultTaskClassValidatorExtractor implements TaskClassValidatorExtractor {
@@ -45,8 +44,7 @@ public class DefaultTaskClassValidatorExtractor implements TaskClassValidatorExt
         Queue<TypeEntry> queue = new ArrayDeque<TypeEntry>();
         queue.add(new TypeEntry(null, type, task));
         while (!queue.isEmpty()) {
-            TypeEntry entry = queue.remove();
-            parseProperties(entry, annotatedPropertiesBuilder, validationMessages, cacheable, queue);
+            parseProperties(queue.remove(), annotatedPropertiesBuilder, validationMessages, cacheable, queue);
         }
         return new TaskClassValidator(annotatedPropertiesBuilder.build(), validationMessages.build(), cacheable);
     }
@@ -56,9 +54,9 @@ public class DefaultTaskClassValidatorExtractor implements TaskClassValidatorExt
         return extractValidator(type, null);
     }
 
-    private <T> void parseProperties(final TypeEntry entry, ImmutableSet.Builder<TaskPropertyInfo> annotatedProperties, final ImmutableCollection.Builder<TaskClassValidationMessage> validationMessages, final boolean cacheable, Queue<TypeEntry> queue) {
-        Set<InputOutputPropertyInfo> inputOutputPropertyInfos = inputOutputPropertyExtractor.extractProperties(entry.getType(), cacheable);
-        for (InputOutputPropertyInfo inputOutputPropertyInfo : inputOutputPropertyInfos) {
+    private void parseProperties(final TypeEntry entry, ImmutableSet.Builder<TaskPropertyInfo> annotatedProperties, final ImmutableCollection.Builder<TaskClassValidationMessage> validationMessages, final boolean cacheable, Queue<TypeEntry> queue) {
+        InputsOutputsInfo inputOutputPropertyInfos = inputOutputPropertyExtractor.extractProperties(entry.getType(), cacheable);
+        for (InputOutputPropertyInfo inputOutputPropertyInfo : inputOutputPropertyInfos.getInputsAndOutputs()) {
             TaskPropertyInfo property = new TaskPropertyInfo(entry.getParent(), inputOutputPropertyInfo);
             annotatedProperties.add(property);
             if (inputOutputPropertyInfo.isNested()) {
@@ -66,6 +64,9 @@ public class DefaultTaskClassValidatorExtractor implements TaskClassValidatorExt
                 queue.add(new TypeEntry(property, inputOutputPropertyInfo.getNestedType(), value));
             }
             property.addValidationMessages(validationMessages);
+        }
+        for (String nonAnnotatedProperty : inputOutputPropertyInfos.getNonAnnotatedProperties()) {
+            validationMessages.add(TaskClassValidationMessage.property(TaskPropertyInfo.fullName(entry.getParent(), nonAnnotatedProperty), "is not annotated with an input or output annotation"));
         }
     }
 

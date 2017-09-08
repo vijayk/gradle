@@ -88,19 +88,19 @@ public class DefaultInputOutputPropertyExtractor implements InputOutputPropertyE
     private final Multimap<Class<? extends Annotation>, Class<? extends Annotation>> annotationOverrides;
     private final Set<Class<? extends Annotation>> relevantAnnotationTypes;
     private final Set<Class<? extends Annotation>> propertyTypeAnnotations;
-    private final LoadingCache<Class<?>, Set<InputOutputPropertyInfo>> cacheablePropertyInfos = CacheBuilder.newBuilder()
+    private final LoadingCache<Class<?>, InputsOutputsInfo> cacheablePropertyInfos = CacheBuilder.newBuilder()
         .weakKeys()
-        .build(new CacheLoader<Class<?>, Set<InputOutputPropertyInfo>>() {
+        .build(new CacheLoader<Class<?>, InputsOutputsInfo>() {
             @Override
-            public Set<InputOutputPropertyInfo> load(Class<?> type) throws Exception {
+            public InputsOutputsInfo load(Class<?> type) throws Exception {
                 return doExtractProperties(type, true);
             }
         });
-    private final LoadingCache<Class<?>, Set<InputOutputPropertyInfo>> nonCacheablePropertyInfos = CacheBuilder.newBuilder()
+    private final LoadingCache<Class<?>, InputsOutputsInfo> nonCacheablePropertyInfos = CacheBuilder.newBuilder()
         .weakKeys()
-        .build(new CacheLoader<Class<?>, Set<InputOutputPropertyInfo>>() {
+        .build(new CacheLoader<Class<?>, InputsOutputsInfo>() {
             @Override
-            public Set<InputOutputPropertyInfo> load(Class<?> type) throws Exception {
+            public InputsOutputsInfo load(Class<?> type) throws Exception {
                 return doExtractProperties(type, false);
             }
         });
@@ -140,13 +140,14 @@ public class DefaultInputOutputPropertyExtractor implements InputOutputPropertyE
 
     // TODO: Remove cacheable from the interface
     @Override
-    public <T> Set<InputOutputPropertyInfo> extractProperties(Class<T> type, final boolean cacheable) {
-        LoadingCache<Class<?>, Set<InputOutputPropertyInfo>> loadingCache = cacheable ? cacheablePropertyInfos : nonCacheablePropertyInfos;
+    public <T> InputsOutputsInfo extractProperties(Class<T> type, final boolean cacheable) {
+        LoadingCache<Class<?>, InputsOutputsInfo> loadingCache = cacheable ? cacheablePropertyInfos : nonCacheablePropertyInfos;
         return loadingCache.getUnchecked(type);
     }
 
-    public <T> Set<InputOutputPropertyInfo> doExtractProperties(Class<T> type, final boolean cacheable) {
+    public <T> InputsOutputsInfo doExtractProperties(Class<T> type, final boolean cacheable) {
         ImmutableSortedSet.Builder<InputOutputPropertyInfo> annotatedProperties = ImmutableSortedSet.naturalOrder();
+        ImmutableSortedSet.Builder<String> unannotatedProperties = ImmutableSortedSet.naturalOrder();
         final Map<String, DefaultTaskPropertyActionContext> propertyContexts = Maps.newLinkedHashMap();
         Types.walkTypeHierarchy(type, IGNORED_SUPER_CLASSES, new Types.TypeVisitor<T>() {
             @Override
@@ -177,12 +178,12 @@ public class DefaultInputOutputPropertyExtractor implements InputOutputPropertyE
             }
         });
         for (DefaultTaskPropertyActionContext propertyContext : propertyContexts.values()) {
-            InputOutputPropertyInfo property = createInputOutputProperty(propertyContext);
+            InputOutputPropertyInfo property = createInputOutputProperty(propertyContext, unannotatedProperties);
             if (property != null) {
                 annotatedProperties.add(property);
             }
         }
-        return annotatedProperties.build();
+        return new InputsOutputsInfo(annotatedProperties.build(), unannotatedProperties.build());
     }
 
     private Iterable<Annotation> mergeDeclaredAnnotations(TaskPropertyActionContext propertyContext, Method method, @Nullable Field field) {
@@ -264,21 +265,20 @@ public class DefaultInputOutputPropertyExtractor implements InputOutputPropertyE
     }
 
     @Nullable
-    private InputOutputPropertyInfo createInputOutputProperty(DefaultTaskPropertyActionContext propertyContext) {
+    private InputOutputPropertyInfo createInputOutputProperty(DefaultTaskPropertyActionContext propertyContext, ImmutableSortedSet.Builder<String> unannotatedProperties) {
         Class<? extends Annotation> propertyType = propertyContext.getPropertyType();
-        if (propertyType != null) {
-            if (propertyContext.isAnnotationPresent(Optional.class)) {
-                propertyContext.setOptional(true);
-            }
-
-            PropertyAnnotationHandler handler = annotationHandlers.get(propertyType);
-            handler.attachActions(propertyContext);
-
-            return propertyContext.createInputOutputProperty();
-        } else {
-            propertyContext.validationMessage("is not annotated with an input or output annotation");
+        if (propertyType == null) {
+            unannotatedProperties.add(propertyContext.getName());
             return null;
         }
+        if (propertyContext.isAnnotationPresent(Optional.class)) {
+            propertyContext.setOptional(true);
+        }
+
+        PropertyAnnotationHandler handler = annotationHandlers.get(propertyType);
+        handler.attachActions(propertyContext);
+
+        return propertyContext.createInputOutputProperty();
     }
 
     private static Map<String, Field> getFields(Class<?> type) {

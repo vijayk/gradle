@@ -16,9 +16,7 @@
 
 package org.gradle.api.internal.project.taskfactory;
 
-import java.util.Set;
-
 public interface InputOutputPropertyExtractor {
     // TODO: Remove cacheable from the interface
-    <T> Set<InputOutputPropertyInfo> extractProperties(Class<T> type, boolean cacheable);
+    <T> InputsOutputsInfo extractProperties(Class<T> type, boolean cacheable);
 }

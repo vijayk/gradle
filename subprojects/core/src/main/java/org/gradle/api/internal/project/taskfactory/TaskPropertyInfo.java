@@ -17,10 +17,13 @@
 package org.gradle.api.internal.project.taskfactory;
 
 import com.google.common.collect.ImmutableCollection;
+import org.gradle.api.NonNullApi;
 
+import javax.annotation.Nullable;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
 
+@NonNullApi
 public class TaskPropertyInfo implements Comparable<TaskPropertyInfo> {
     private static final TaskPropertyValue NO_OP_VALUE = new TaskPropertyValue() {
         public Object getValue() {
@@ -38,10 +41,14 @@ public class TaskPropertyInfo implements Comparable<TaskPropertyInfo> {
     private final String name;
     private final InputOutputPropertyInfo inputOutputPropertyInfo;
 
-    TaskPropertyInfo(TaskPropertyInfo parent, InputOutputPropertyInfo inputOutputPropertyInfo) {
+    public static String fullName(@Nullable TaskPropertyInfo parent, String relativeName) {
+        return parent == null ? relativeName : parent.getName() + '.' + relativeName;
+    }
+
+    TaskPropertyInfo(@Nullable TaskPropertyInfo parent, InputOutputPropertyInfo inputOutputPropertyInfo) {
         this.parent = parent;
         this.inputOutputPropertyInfo = inputOutputPropertyInfo;
-        this.name = parent == null ? inputOutputPropertyInfo.getName() : parent.getName() + '.' + inputOutputPropertyInfo.getName();
+        this.name = fullName(parent, inputOutputPropertyInfo.getName());
     }
 
     @Override
