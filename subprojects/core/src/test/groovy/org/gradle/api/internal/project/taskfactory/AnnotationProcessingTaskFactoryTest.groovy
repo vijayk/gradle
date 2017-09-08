@@ -612,8 +612,7 @@ class AnnotationProcessingTaskFactoryTest extends AbstractProjectBuilderSpec {
         task.outputs.files.files
 
         then:
-        // TODO wolfs: When extracting the task info return an immutable view of all the properties
-        task.traversedOutputsCount == 2
+        task.traversedOutputsCount == 1
     }
 
     def propertyExtractionJavaBeanSpec() {
