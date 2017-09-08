@@ -271,6 +271,8 @@ dependencies {
     coreRuntimeExtensions project(':dependencyManagement') //See: DynamicModulesClassPathProvider.GRADLE_EXTENSION_MODULES
     coreRuntimeExtensions project(':pluginUse')
     coreRuntimeExtensions project(':workers')
+    
+    coreRuntimeOptionalExtensions "org.gradle:gradle-kotlin-dsl:${versions.gradle_kotlin_dsl}"
 }
 
 import org.gradle.modules.PatchExternalModules
