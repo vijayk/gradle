@@ -227,6 +227,9 @@ configurations {
     coreRuntimeExtensions {
         visible = false
     }
+    coreRuntimeOptionalExtensions {
+        visible = false
+    } 
     externalModules {
         visible = false
     }
