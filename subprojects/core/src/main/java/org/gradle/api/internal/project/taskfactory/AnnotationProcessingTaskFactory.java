@@ -32,14 +32,16 @@ import java.util.Map;
 public class AnnotationProcessingTaskFactory implements ITaskFactory {
     private final TaskClassInfoStore taskClassInfoStore;
     private final ITaskFactory taskFactory;
+    private final TaskClassValidatorExtractor taskClassValidatorExtractor;
 
-    public AnnotationProcessingTaskFactory(TaskClassInfoStore taskClassInfoStore, ITaskFactory taskFactory) {
+    public AnnotationProcessingTaskFactory(TaskClassInfoStore taskClassInfoStore, TaskClassValidatorExtractor taskClassValidatorExtractor, ITaskFactory taskFactory) {
         this.taskClassInfoStore = taskClassInfoStore;
+        this.taskClassValidatorExtractor = taskClassValidatorExtractor;
         this.taskFactory = taskFactory;
     }
 
     public ITaskFactory createChild(ProjectInternal project, Instantiator instantiator) {
-        return new AnnotationProcessingTaskFactory(taskClassInfoStore, taskFactory.createChild(project, instantiator));
+        return new AnnotationProcessingTaskFactory(taskClassInfoStore, taskClassValidatorExtractor, taskFactory.createChild(project, instantiator));
     }
 
     public TaskInternal createTask(Map<String, ?> args) {
@@ -67,13 +69,13 @@ public class AnnotationProcessingTaskFactory implements ITaskFactory {
             task.prependParallelSafeAction(actionFactory.create());
         }
 
-        TaskClassValidator validator = taskClassInfo.getValidator();
+        TaskClassValidator validator = taskClassValidatorExtractor.extractValidator(task);
         if (validator.hasAnythingToValidate()) {
             validator.addInputsAndOutputs(task);
         }
 
         // Enabled caching if task type is annotated with @CacheableTask
-        if (taskClassInfo.isCacheable()) {
+        if (validator.isCacheable()) {
             task.getOutputs().cacheIf("Annotated with @CacheableTask", Specs.SATISFIES_ALL);
         }
 

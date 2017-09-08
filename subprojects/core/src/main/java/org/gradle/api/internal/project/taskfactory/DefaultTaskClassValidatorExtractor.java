@@ -37,6 +37,16 @@ public class DefaultTaskClassValidatorExtractor implements TaskClassValidatorExt
         this.inputOutputPropertyExtractor = inputOutputPropertyExtractor;
     }
 
+    @Override
+    public TaskClassValidator extractValidator(Task task) {
+        return extractValidator(task.getClass(), task);
+    }
+
+    @Override
+    public TaskClassValidator extractValidator(Class<? extends Task> type) {
+        return extractValidator(type, null);
+    }
+
     public TaskClassValidator extractValidator(Class<? extends Task> type, @Nullable Task task) {
         boolean cacheable = type.isAnnotationPresent(CacheableTask.class);
         ImmutableSortedSet.Builder<TaskPropertyInfo> annotatedPropertiesBuilder = ImmutableSortedSet.naturalOrder();
@@ -47,11 +57,6 @@ public class DefaultTaskClassValidatorExtractor implements TaskClassValidatorExt
             parseProperties(queue.remove(), annotatedPropertiesBuilder, validationMessages, cacheable, queue);
         }
         return new TaskClassValidator(annotatedPropertiesBuilder.build(), validationMessages.build(), cacheable);
-    }
-
-    @Override
-    public TaskClassValidator extractValidator(Class<? extends Task> type) {
-        return extractValidator(type, null);
     }
 
     private void parseProperties(final TypeEntry entry, ImmutableSet.Builder<TaskPropertyInfo> annotatedProperties, final ImmutableCollection.Builder<TaskClassValidationMessage> validationMessages, final boolean cacheable, Queue<TypeEntry> queue) {

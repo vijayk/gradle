@@ -16,24 +16,23 @@
 
 package org.gradle.api.internal.project.taskfactory;
 
+import com.google.common.collect.ImmutableList;
 import org.gradle.api.Action;
+import org.gradle.api.NonNullApi;
 import org.gradle.api.Task;
 import org.gradle.internal.Factory;
 
-import java.util.ArrayList;
 import java.util.List;
 
+@NonNullApi
 public class TaskClassInfo {
-    private TaskClassValidator validator;
-    private final List<Factory<Action<Task>>> taskActions = new ArrayList<Factory<Action<Task>>>();
-    private boolean incremental;
 
-    public TaskClassValidator getValidator() {
-        return validator;
-    }
+    private final ImmutableList<Factory<Action<Task>>> taskActions;
+    private final boolean incremental;
 
-    public void setValidator(TaskClassValidator validator) {
-        this.validator = validator;
+    public TaskClassInfo(boolean incremental, ImmutableList<Factory<Action<Task>>> taskActions) {
+        this.incremental = incremental;
+        this.taskActions = taskActions;
     }
 
     public List<Factory<Action<Task>>> getTaskActions() {
@@ -44,11 +43,4 @@ public class TaskClassInfo {
         return incremental;
     }
 
-    public void setIncremental(boolean incremental) {
-        this.incremental = incremental;
-    }
-
-    public boolean isCacheable() {
-        return validator.isCacheable();
-    }
 }

@@ -50,8 +50,8 @@ class AnnotationProcessingTaskFactoryTest extends AbstractProjectBuilderSpec {
 
     def setup() {
         delegate = Mock(ITaskFactory)
-        taskClassInfoStore = new DefaultTaskClassInfoStore(new DefaultTaskClassValidatorExtractor(new DefaultInputOutputPropertyExtractor([])))
-        factory = new AnnotationProcessingTaskFactory(taskClassInfoStore, delegate)
+        taskClassInfoStore = new DefaultTaskClassInfoStore()
+        factory = new AnnotationProcessingTaskFactory(taskClassInfoStore, new DefaultTaskClassValidatorExtractor(new DefaultInputOutputPropertyExtractor([])), delegate)
         testDir = temporaryFolder.testDirectory
         existingFile = testDir.file("file.txt").touch()
         missingFile = testDir.file("missing.txt")
@@ -612,7 +612,8 @@ class AnnotationProcessingTaskFactoryTest extends AbstractProjectBuilderSpec {
         task.outputs.files.files
 
         then:
-        task.traversedOutputsCount == 1
+        // TODO wolfs: When extracting the task info return an immutable view of all the properties
+        task.traversedOutputsCount == 2
     }
 
     def propertyExtractionJavaBeanSpec() {

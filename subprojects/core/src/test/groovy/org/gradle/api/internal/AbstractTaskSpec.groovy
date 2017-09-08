@@ -34,8 +34,8 @@ import static org.junit.Assert.assertTrue
 
 class AbstractTaskSpec extends AbstractProjectBuilderSpec {
     def instantiator = TestUtil.instantiatorFactory().decorate()
-    def taskClassInfoStore = new DefaultTaskClassInfoStore(new DefaultTaskClassValidatorExtractor(new DefaultInputOutputPropertyExtractor([])))
-    private final AnnotationProcessingTaskFactory rootFactory = new AnnotationProcessingTaskFactory(taskClassInfoStore, new TaskFactory(new AsmBackedClassGenerator()))
+    def taskClassInfoStore = new DefaultTaskClassInfoStore()
+    private final AnnotationProcessingTaskFactory rootFactory = new AnnotationProcessingTaskFactory(taskClassInfoStore, new DefaultTaskClassValidatorExtractor(new DefaultInputOutputPropertyExtractor([])), new TaskFactory(new AsmBackedClassGenerator()))
 
     public static class TestTask extends AbstractTask {
     }

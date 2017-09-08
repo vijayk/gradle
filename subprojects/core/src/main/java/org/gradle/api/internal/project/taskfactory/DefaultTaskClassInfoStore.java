@@ -19,9 +19,11 @@ package org.gradle.api.internal.project.taskfactory;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableList;
 import org.gradle.api.Action;
 import org.gradle.api.Describable;
 import org.gradle.api.GradleException;
+import org.gradle.api.NonNullApi;
 import org.gradle.api.Task;
 import org.gradle.api.internal.changedetection.TaskArtifactState;
 import org.gradle.api.internal.tasks.ClassLoaderAwareTaskAction;
@@ -38,45 +40,38 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+@NonNullApi
 public class DefaultTaskClassInfoStore implements TaskClassInfoStore {
-    private final TaskClassValidatorExtractor validatorExtractor;
 
     private final LoadingCache<Class<? extends Task>, TaskClassInfo> classInfos = CacheBuilder.newBuilder()
         .weakKeys()
         .build(new CacheLoader<Class<? extends Task>, TaskClassInfo>() {
             @Override
             public TaskClassInfo load(Class<? extends Task> type) throws Exception {
-                TaskClassInfo taskClassInfo = new TaskClassInfo();
-                findTaskActions(type, taskClassInfo);
-
-                TaskClassValidator validator = validatorExtractor.extractValidator(type);
-                taskClassInfo.setValidator(validator);
-
-                return taskClassInfo;
+                return findTaskActions(type);
             }
         });
-
-    public DefaultTaskClassInfoStore(TaskClassValidatorExtractor validatorExtractor) {
-        this.validatorExtractor = validatorExtractor;
-    }
 
     @Override
     public TaskClassInfo getTaskClassInfo(Class<? extends Task> type) {
         return classInfos.getUnchecked(type);
     }
 
-    private void findTaskActions(Class<? extends Task> type, TaskClassInfo taskClassInfo) {
+    private TaskClassInfo findTaskActions(Class<? extends Task> type) {
         Set<String> methods = new HashSet<String>();
+        ImmutableList.Builder<Factory<Action<Task>>> taskActionsBuilder = ImmutableList.builder();
+        boolean incremental = false;
         for (Class current = type; current != null; current = current.getSuperclass()) {
             for (Method method : current.getDeclaredMethods()) {
-                attachTaskAction(type, method, taskClassInfo, methods);
+                incremental = attachTaskAction(type, method, taskActionsBuilder, methods, incremental);
             }
         }
+        return new TaskClassInfo(incremental, taskActionsBuilder.build());
     }
 
-    private void attachTaskAction(Class<? extends Task> type, final Method method, TaskClassInfo taskClassInfo, Collection<String> processedMethods) {
+    private boolean attachTaskAction(Class<? extends Task> type, final Method method, ImmutableList.Builder<Factory<Action<Task>>> taskActionsBuilder, Collection<String> processedMethods, boolean incremental) {
         if (method.getAnnotation(TaskAction.class) == null) {
-            return;
+            return incremental;
         }
         if (Modifier.isStatic(method.getModifiers())) {
             throw new GradleException(String.format("Cannot use @TaskAction annotation on static method %s.%s().",
@@ -95,16 +90,16 @@ public class DefaultTaskClassInfoStore implements TaskClassInfoStore {
                     "Cannot use @TaskAction annotation on method %s.%s() because %s is not a valid parameter to an action method.",
                     method.getDeclaringClass().getSimpleName(), method.getName(), parameterTypes[0]));
             }
-            if (taskClassInfo.isIncremental()) {
+            if (incremental) {
                 throw new GradleException(String.format("Cannot have multiple @TaskAction methods accepting an %s parameter.", IncrementalTaskInputs.class.getSimpleName()));
             }
-            taskClassInfo.setIncremental(true);
+            incremental = true;
         }
-        if (processedMethods.contains(method.getName())) {
-            return;
+        if (!processedMethods.contains(method.getName())) {
+            taskActionsBuilder.add(createActionFactory(type, method, parameterTypes));
+            processedMethods.add(method.getName());
         }
-        taskClassInfo.getTaskActions().add(createActionFactory(type, method, parameterTypes));
-        processedMethods.add(method.getName());
+        return incremental;
     }
 
     private Factory<Action<Task>> createActionFactory(final Class<? extends Task> type, final Method method, final Class<?>[] parameterTypes) {

@@ -238,14 +238,15 @@ public class BuildScopeServices extends DefaultServiceRegistry {
         return new DefaultInputOutputPropertyExtractor(annotationHandlers);
     }
 
-    protected TaskClassInfoStore createTaskClassInfoStore(TaskClassValidatorExtractor validatorExtractor) {
-        return new DefaultTaskClassInfoStore(validatorExtractor);
+    protected TaskClassInfoStore createTaskClassInfoStore() {
+        return new DefaultTaskClassInfoStore();
     }
 
-    protected ITaskFactory createITaskFactory(TaskClassInfoStore taskClassInfoStore) {
+    protected ITaskFactory createITaskFactory(TaskClassValidatorExtractor taskClassValidatorExtractor, TaskClassInfoStore taskClassInfoStore) {
         return new DependencyAutoWireTaskFactory(
             new AnnotationProcessingTaskFactory(
                 taskClassInfoStore,
+                taskClassValidatorExtractor,
                 new TaskFactory(
                     get(ClassGenerator.class))
             )

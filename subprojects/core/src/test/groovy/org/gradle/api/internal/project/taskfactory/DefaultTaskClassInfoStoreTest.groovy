@@ -16,156 +16,75 @@
 
 package org.gradle.api.internal.project.taskfactory
 
+import com.google.common.util.concurrent.UncheckedExecutionException
 import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.CacheableTask
-import org.gradle.api.tasks.Console
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputDirectory
-import org.gradle.api.tasks.InputFile
-import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.OutputDirectories
-import org.gradle.api.tasks.OutputDirectory
-import org.gradle.api.tasks.OutputFile
-import org.gradle.api.tasks.OutputFiles
-import spock.lang.Issue
+import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.incremental.IncrementalTaskInputs
 import spock.lang.Specification
 
-import javax.inject.Inject
-
 class DefaultTaskClassInfoStoreTest extends Specification {
-    def taskClassInfoStore = new DefaultTaskClassInfoStore(new DefaultTaskClassValidatorExtractor(new DefaultInputOutputPropertyExtractor([])))
 
-    @SuppressWarnings("GrDeprecatedAPIUsage")
+    def taskClassInfoStore = new DefaultTaskClassInfoStore()
+
     private static class SimpleTask extends DefaultTask {
-        @Input String inputString
-        @InputFile File inputFile
-        @InputDirectory File inputDirectory
-        @InputFiles File inputFiles
-        @OutputFile File outputFile
-        @OutputFiles Set<File> outputFiles
-        @OutputDirectory File outputDirectory
-        @OutputDirectories Set<File> outputDirectories
-        @Inject Object injectedService
-        @Internal Object internal
-        @Console boolean console
+        @TaskAction
+        void doStuff() {}
     }
 
-    def "can get annotated properties of simple task"() {
-        def info = taskClassInfoStore.getTaskClassInfo(SimpleTask)
+    private static class MultipleActions extends DefaultTask {
+        @TaskAction
+        void doStuff() {}
 
-        expect:
-        !info.incremental
-        !info.cacheable
-        info.validator.annotatedProperties*.name.sort() == ["inputDirectory", "inputFile", "inputFiles", "inputString", "outputDirectories", "outputDirectory", "outputFile", "outputFiles"]
+        @TaskAction
+        void doMoreStuff() {}
     }
 
-    @CacheableTask
-    private static class MyCacheableTask extends DefaultTask {}
+    private static class MultipleIncrementalActions extends DefaultTask {
+        @TaskAction
+        void doStuff(IncrementalTaskInputs inputs) {}
 
-    def "cacheable tasks are detected"() {
-        expect:
-        taskClassInfoStore.getTaskClassInfo(MyCacheableTask).cacheable
+        @TaskAction
+        void doMoreStuff(IncrementalTaskInputs inputs) {}
     }
 
-    private static class MyNonCacheableTask extends MyCacheableTask {}
-
-    def "cacheability is not inherited"() {
-        expect:
-        !taskClassInfoStore.getTaskClassInfo(MyNonCacheableTask).cacheable
-    }
-
-    private static class BaseTask extends DefaultTask {
-        @Input String baseValue
-        @Input String superclassValue
-        @Input String superclassValueWithDuplicateAnnotation
-        String nonAnnotatedBaseValue
-    }
-
-    private static class OverridingTask extends BaseTask {
-        @Override
-        String getSuperclassValue() {
-            return super.getSuperclassValue()
-        }
-
-        @Input @Override
-        String getSuperclassValueWithDuplicateAnnotation() {
-            return super.getSuperclassValueWithDuplicateAnnotation()
-        }
-
-        @Input @Override
-        String getNonAnnotatedBaseValue() {
-            return super.getNonAnnotatedBaseValue()
-        }
-    }
-
-    def "overridden properties inherit super-class annotations"() {
-        def info = taskClassInfoStore.getTaskClassInfo(OverridingTask)
-
-        expect:
-        !info.incremental
-        info.validator.annotatedProperties*.name.sort() == ["baseValue", "nonAnnotatedBaseValue", "superclassValue", "superclassValueWithDuplicateAnnotation"]
-    }
-
-    private interface TaskSpec {
-        @Input
-        String getInterfaceValue()
-    }
-
-    private static class InterfaceImplementingTask extends DefaultTask implements TaskSpec {
-        @Override
-        String getInterfaceValue() {
-            "value"
-        }
-    }
-
-    def "implemented properties inherit interface annotations"() {
-        def info = taskClassInfoStore.getTaskClassInfo(InterfaceImplementingTask)
-
-        expect:
-        !info.incremental
-        info.validator.annotatedProperties*.name.sort() == ["interfaceValue"]
-    }
-
-    private static class NonAnnotatedTask extends DefaultTask {
-        File inputFile
-
-        @SuppressWarnings("GrMethodMayBeStatic")
-        String getValue() {
-            "test"
-        }
+    private static class IncrementalTask extends DefaultTask {
+        @TaskAction
+        void doStuffIncrementally(IncrementalTaskInputs inputs) {}
     }
 
     def "class infos are cached"() {
         def info = taskClassInfoStore.getTaskClassInfo(SimpleTask)
         expect:
-        info == taskClassInfoStore.getTaskClassInfo(SimpleTask)
+        info.is(taskClassInfoStore.getTaskClassInfo(SimpleTask))
     }
 
-    @SuppressWarnings("GroovyUnusedDeclaration")
-    private static class IsGetterTask extends DefaultTask {
-        @Input
-        private boolean feature1
-        private boolean feature2
-
-        boolean isFeature1() {
-            return feature1
-        }
-        void setFeature1(boolean enabled) {
-            this.feature1 = enabled
-        }
-        boolean isFeature2() {
-            return feature2
-        }
-        void setFeature2(boolean enabled) {
-            this.feature2 = enabled
-        }
-    }
-
-    @Issue("https://issues.gradle.org/browse/GRADLE-2115")
-    def "annotation on private filed is recognized for is-getter"() {
-        def info = taskClassInfoStore.getTaskClassInfo(IsGetterTask)
+    def "simple task info"() {
+        def info = taskClassInfoStore.getTaskClassInfo(SimpleTask)
         expect:
-        info.validator.annotatedProperties*.name as List == ["feature1"]
+        !info.incremental
+        info.taskActions.size() == 1
     }
+
+    def "incremental task info"() {
+        def info = taskClassInfoStore.getTaskClassInfo(IncrementalTask)
+        expect:
+        info.incremental
+        info.taskActions.size() == 1
+    }
+
+    def "task with multiple actions"() {
+        def info = taskClassInfoStore.getTaskClassInfo(MultipleActions)
+        expect:
+        !info.incremental
+        info.taskActions.size() == 2
+    }
+
+    def "cannot have multiple incremental actions"() {
+        when:
+        taskClassInfoStore.getTaskClassInfo(MultipleIncrementalActions)
+        then:
+        def e = thrown(UncheckedExecutionException)
+        e.cause.message == "Cannot have multiple @TaskAction methods accepting an IncrementalTaskInputs parameter."
+    }
+
 }

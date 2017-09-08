@@ -29,10 +29,10 @@ public class TaskPropertyValidationAccess {
     @SuppressWarnings("unused")
     public static void collectTaskValidationProblems(Class<?> task, Map<String, Boolean> problems) {
         final PropertyAnnotationHandler[] propertyAnnotationHandlers = new PropertyAnnotationHandler[]{new ClasspathPropertyAnnotationHandler(), new CompileClasspathPropertyAnnotationHandler()};
-        final DefaultInputOutputPropertyExtractor defaultInputOutputPropertyExtractor = new DefaultInputOutputPropertyExtractor(Arrays.asList(propertyAnnotationHandlers));
-        TaskClassInfoStore infoStore = new DefaultTaskClassInfoStore(new DefaultTaskClassValidatorExtractor(defaultInputOutputPropertyExtractor));
-        TaskClassInfo info = infoStore.getTaskClassInfo(Cast.<Class<? extends Task>>uncheckedCast(task));
-        for (TaskClassValidationMessage validationMessage : info.getValidator().getValidationMessages()) {
+        final DefaultInputOutputPropertyExtractor inputOutputPropertyExtractor = new DefaultInputOutputPropertyExtractor(Arrays.asList(propertyAnnotationHandlers));
+        DefaultTaskClassValidatorExtractor taskClassValidatorExtractor = new DefaultTaskClassValidatorExtractor(inputOutputPropertyExtractor);
+        TaskClassValidator validator = taskClassValidatorExtractor.extractValidator(Cast.<Class<? extends Task>>uncheckedCast(task));
+        for (TaskClassValidationMessage validationMessage : validator.getValidationMessages()) {
             problems.put(String.format("Task type '%s': %s.", task.getName(), validationMessage), Boolean.FALSE);
         }
     }

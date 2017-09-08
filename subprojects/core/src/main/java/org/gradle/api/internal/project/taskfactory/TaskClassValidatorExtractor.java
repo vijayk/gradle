@@ -21,5 +21,6 @@ import org.gradle.api.Task;
 
 @NonNullApi
 public interface TaskClassValidatorExtractor {
+    TaskClassValidator extractValidator(Task task);
     TaskClassValidator extractValidator(Class<? extends Task> type);
 }
