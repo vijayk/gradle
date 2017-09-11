@@ -20,9 +20,11 @@ import com.google.common.collect.Queues
 import org.gradle.api.Action
 import org.gradle.api.DefaultTask
 import org.gradle.api.Task
-import org.gradle.api.internal.GradleInternal
 import org.gradle.api.file.FileCollection
+import org.gradle.api.internal.GradleInternal
 import org.gradle.api.internal.project.ProjectInternal
+import org.gradle.api.internal.project.taskfactory.DefaultInputOutputPropertyExtractor
+import org.gradle.api.internal.project.taskfactory.DefaultTaskClassValidatorExtractor
 import org.gradle.api.tasks.Destroys
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
@@ -64,10 +66,12 @@ class DefaultTaskExecutionPlanParallelTest extends ConcurrentSpec {
     def workerLeaseService = new DefaultWorkerLeaseService(coordinationService, new ParallelismConfigurationManagerFixture(true, 1))
     def parentWorkerLease = workerLeaseService.workerLease
     def gradle = Mock(GradleInternal)
+    def taskClassValidatorExtractor = new DefaultTaskClassValidatorExtractor(new DefaultInputOutputPropertyExtractor([]))
+
 
     def setup() {
         root = createRootProject(temporaryFolder.testDirectory)
-        executionPlan = new DefaultTaskExecutionPlan(cancellationHandler, coordinationService, workerLeaseService, Mock(GradleInternal))
+        executionPlan = new DefaultTaskExecutionPlan(cancellationHandler, coordinationService, workerLeaseService, Mock(GradleInternal), taskClassValidatorExtractor)
         parentWorkerLease.start()
     }
 

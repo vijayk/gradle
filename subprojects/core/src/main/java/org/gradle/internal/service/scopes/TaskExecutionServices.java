@@ -40,12 +40,14 @@ import org.gradle.api.internal.changedetection.state.TaskOutputFilesRepository;
 import org.gradle.api.internal.changedetection.state.ValueSnapshotter;
 import org.gradle.api.internal.file.FileCollectionFactory;
 import org.gradle.api.internal.project.taskfactory.FileSnapshottingPropertyAnnotationHandler;
+import org.gradle.api.internal.project.taskfactory.TaskClassValidatorExtractor;
 import org.gradle.api.internal.tasks.TaskExecuter;
 import org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter;
 import org.gradle.api.internal.tasks.execution.CleanupStaleOutputsExecuter;
 import org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter;
 import org.gradle.api.internal.tasks.execution.ExecuteAtMostOnceTaskExecuter;
 import org.gradle.api.internal.tasks.execution.ResolveBuildCacheKeyExecuter;
+import org.gradle.api.internal.tasks.execution.ResolveInputsOutputsTaskExecuter;
 import org.gradle.api.internal.tasks.execution.ResolveTaskArtifactStateTaskExecuter;
 import org.gradle.api.internal.tasks.execution.ResolveTaskOutputCachingStateExecuter;
 import org.gradle.api.internal.tasks.execution.SkipCachedTaskExecuter;
@@ -105,7 +107,7 @@ public class TaskExecutionServices {
                                     AsyncWorkTracker asyncWorkTracker,
                                     BuildOutputCleanupRegistry cleanupRegistry,
                                     TaskOutputFilesRepository taskOutputFilesRepository,
-                                    BuildScanPluginApplied buildScanPlugin) {
+                                    BuildScanPluginApplied buildScanPlugin, TaskClassValidatorExtractor taskClassValidatorExtractor) {
 
         boolean taskOutputCacheEnabled = startParameter.isBuildCacheEnabled();
         boolean scanPluginApplied = buildScanPlugin.isBuildScanPluginApplied();
@@ -140,6 +142,7 @@ public class TaskExecutionServices {
         executer = new ResolveTaskArtifactStateTaskExecuter(repository, executer);
         executer = new SkipTaskWithNoActionsExecuter(executer);
         executer = new SkipOnlyIfTaskExecuter(executer);
+        executer = new ResolveInputsOutputsTaskExecuter(executer, taskClassValidatorExtractor);
         executer = new ExecuteAtMostOnceTaskExecuter(executer);
         executer = new CatchExceptionTaskExecuter(executer);
         return executer;

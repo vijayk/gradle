@@ -21,6 +21,7 @@ import org.gradle.api.internal.artifacts.DependencyManagementServices
 import org.gradle.api.internal.changedetection.state.InMemoryCacheDecoratorFactory
 import org.gradle.api.internal.plugins.PluginRegistry
 import org.gradle.api.internal.project.ProjectInternal
+import org.gradle.api.internal.project.taskfactory.TaskClassValidatorExtractor
 import org.gradle.api.internal.tasks.options.OptionReader
 import org.gradle.cache.CacheRepository
 import org.gradle.execution.BuildConfigurationActionExecuter
@@ -81,6 +82,7 @@ public class GradleScopeServicesTest extends Specification {
         parent.get(WorkerLeaseRegistry) >> Stub(WorkerLeaseRegistry)
         parent.get(ParallelismConfigurationManager) >> new ParallelismConfigurationManagerFixture(DefaultParallelismConfiguration.DEFAULT)
         parent.get(StyledTextOutputFactory) >> new TestStyledTextOutputFactory()
+        parent.get(TaskClassValidatorExtractor) >> Stub(TaskClassValidatorExtractor)
         gradle.getStartParameter() >> startParameter
         pluginRegistryParent.createChild(_, _, _) >> pluginRegistryChild
         parent.hasService(_) >> true

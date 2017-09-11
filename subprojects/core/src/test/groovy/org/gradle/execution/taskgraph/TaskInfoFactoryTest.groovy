@@ -17,10 +17,14 @@
 package org.gradle.execution.taskgraph
 
 import org.gradle.api.internal.TaskInternal
+import org.gradle.api.internal.project.taskfactory.DefaultInputOutputPropertyExtractor
+import org.gradle.api.internal.project.taskfactory.DefaultTaskClassValidatorExtractor
 import spock.lang.Specification
 
 class TaskInfoFactoryTest extends Specification {
-    def graph = new TaskInfoFactory()
+
+    def taskClassValidatorExtractor = new DefaultTaskClassValidatorExtractor(new DefaultInputOutputPropertyExtractor([]))
+    def graph = new TaskInfoFactory(taskClassValidatorExtractor)
     def a = task('a')
     def b = task('b')
     def c = task('c')

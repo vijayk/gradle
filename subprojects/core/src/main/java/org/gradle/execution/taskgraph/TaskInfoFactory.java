@@ -19,6 +19,9 @@ package org.gradle.execution.taskgraph;
 
 import org.gradle.api.Task;
 import org.gradle.api.internal.TaskInternal;
+import org.gradle.api.internal.project.taskfactory.TaskClassValidator;
+import org.gradle.api.internal.project.taskfactory.TaskClassValidatorExtractor;
+import org.gradle.api.specs.Specs;
 import org.gradle.composite.internal.IncludedBuildTaskResource;
 
 import java.util.HashMap;
@@ -27,6 +30,11 @@ import java.util.Set;
 
 public class TaskInfoFactory {
     private final Map<Task, TaskInfo> nodes = new HashMap<Task, TaskInfo>();
+    private final TaskClassValidatorExtractor taskClassValidatorExtractor;
+
+    public TaskInfoFactory(TaskClassValidatorExtractor taskClassValidatorExtractor) {
+        this.taskClassValidatorExtractor = taskClassValidatorExtractor;
+    }
 
     public Set<Task> getTasks() {
         return nodes.keySet();
@@ -35,6 +43,7 @@ public class TaskInfoFactory {
     public TaskInfo createNode(Task task) {
         TaskInfo node = nodes.get(task);
         if (node == null) {
+            addInputsAndOutputs(task);
             if (task instanceof IncludedBuildTaskResource) {
                 node = new TaskResourceTaskInfo((TaskInternal) task);
             } else {
@@ -43,6 +52,17 @@ public class TaskInfoFactory {
             nodes.put(task, node);
         }
         return node;
+    }
+
+    private void addInputsAndOutputs(Task task) {
+        TaskClassValidator validator = taskClassValidatorExtractor.extractValidator(task);
+        if (validator.hasAnythingToValidate()) {
+            validator.addInputsAndOutputs((TaskInternal) task);
+        }
+        // Enabled caching if task type is annotated with @CacheableTask
+        if (validator.isCacheable()) {
+            task.getOutputs().cacheIf("Annotated with @CacheableTask", Specs.SATISFIES_ALL);
+        }
     }
 
     public void clear() {

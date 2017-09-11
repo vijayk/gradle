@@ -24,6 +24,8 @@ import org.gradle.api.internal.GradleInternal
 import org.gradle.api.internal.TaskInternal
 import org.gradle.api.internal.TaskOutputsInternal
 import org.gradle.api.internal.project.ProjectInternal
+import org.gradle.api.internal.project.taskfactory.DefaultInputOutputPropertyExtractor
+import org.gradle.api.internal.project.taskfactory.DefaultTaskClassValidatorExtractor
 import org.gradle.api.internal.tasks.TaskDestroyablesInternal
 import org.gradle.api.internal.tasks.TaskStateInternal
 import org.gradle.api.specs.Spec
@@ -55,10 +57,11 @@ class DefaultTaskExecutionPlanTest extends AbstractProjectBuilderSpec {
     def coordinationService = Mock(ResourceLockCoordinationService)
     def workerLease = Mock(WorkerLeaseRegistry.WorkerLease)
     def gradle = Mock(GradleInternal)
+    def taskClassValidatorExtractor = new DefaultTaskClassValidatorExtractor(new DefaultInputOutputPropertyExtractor([]))
 
     def setup() {
         root = createRootProject(temporaryFolder.testDirectory);
-        executionPlan = new DefaultTaskExecutionPlan(cancellationHandler, coordinationService, workerLeaseService, Mock(GradleInternal))
+        executionPlan = new DefaultTaskExecutionPlan(cancellationHandler, coordinationService, workerLeaseService, Mock(GradleInternal), taskClassValidatorExtractor)
         _ * workerLeaseService.getProjectLock(_, _) >> Mock(ResourceLock) {
             _ * isLocked() >> false
             _ * tryLock() >> true

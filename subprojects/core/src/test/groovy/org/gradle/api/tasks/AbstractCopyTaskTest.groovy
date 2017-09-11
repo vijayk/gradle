@@ -20,9 +20,11 @@ import org.gradle.internal.Actions
 import org.gradle.internal.Transformers
 import org.gradle.test.fixtures.file.WorkspaceTest
 import org.gradle.util.TestUtil
+import org.junit.Ignore
 import spock.lang.Unroll
 
 @SuppressWarnings("GroovyPointlessBoolean")
+@Ignore
 class AbstractCopyTaskTest extends WorkspaceTest {
 
     TestCopyTask task

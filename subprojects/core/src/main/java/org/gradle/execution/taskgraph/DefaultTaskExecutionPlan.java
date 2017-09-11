@@ -34,6 +34,7 @@ import org.gradle.api.UncheckedIOException;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.internal.TaskInternal;
 import org.gradle.api.internal.project.ProjectInternal;
+import org.gradle.api.internal.project.taskfactory.TaskClassValidatorExtractor;
 import org.gradle.api.internal.tasks.CachingTaskDependencyResolveContext;
 import org.gradle.api.internal.tasks.TaskContainerInternal;
 import org.gradle.api.internal.tasks.TaskDestroyablesInternal;
@@ -91,7 +92,7 @@ import static org.gradle.internal.resources.ResourceLockState.Disposition.*;
 public class DefaultTaskExecutionPlan implements TaskExecutionPlan {
     private final Set<TaskInfo> tasksInUnknownState = new LinkedHashSet<TaskInfo>();
     private final Set<TaskInfo> entryTasks = new LinkedHashSet<TaskInfo>();
-    private final TaskInfoFactory nodeFactory = new TaskInfoFactory();
+    private final TaskInfoFactory nodeFactory;
     private final LinkedHashMap<Task, TaskInfo> executionPlan = new LinkedHashMap<Task, TaskInfo>();
     private final List<TaskInfo> executionQueue = new LinkedList<TaskInfo>();
     private final Map<Project, ResourceLock> projectLocks = Maps.newHashMap();
@@ -113,11 +114,12 @@ public class DefaultTaskExecutionPlan implements TaskExecutionPlan {
 
     private boolean tasksCancelled;
 
-    public DefaultTaskExecutionPlan(BuildCancellationToken cancellationToken, ResourceLockCoordinationService coordinationService, WorkerLeaseService workerLeaseService, GradleInternal gradle) {
+    public DefaultTaskExecutionPlan(BuildCancellationToken cancellationToken, ResourceLockCoordinationService coordinationService, WorkerLeaseService workerLeaseService, GradleInternal gradle, TaskClassValidatorExtractor taskClassValidatorExtractor) {
         this.cancellationToken = cancellationToken;
         this.coordinationService = coordinationService;
         this.workerLeaseService = workerLeaseService;
         this.gradle = gradle;
+        this.nodeFactory = new TaskInfoFactory(taskClassValidatorExtractor);
     }
 
     @Override

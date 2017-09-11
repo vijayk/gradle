@@ -20,7 +20,6 @@ import org.gradle.api.Task;
 import org.gradle.api.internal.TaskInternal;
 import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.specs.Spec;
-import org.gradle.api.specs.Specs;
 import org.gradle.internal.Factory;
 import org.gradle.internal.reflect.Instantiator;
 
@@ -67,16 +66,6 @@ public class AnnotationProcessingTaskFactory implements ITaskFactory {
 
         for (Factory<Action<Task>> actionFactory : taskClassInfo.getTaskActions()) {
             task.prependParallelSafeAction(actionFactory.create());
-        }
-
-        TaskClassValidator validator = taskClassValidatorExtractor.extractValidator(task.getClass());
-        if (validator.hasAnythingToValidate()) {
-            validator.addInputsAndOutputs(task);
-        }
-
-        // Enabled caching if task type is annotated with @CacheableTask
-        if (validator.isCacheable()) {
-            task.getOutputs().cacheIf("Annotated with @CacheableTask", Specs.SATISFIES_ALL);
         }
 
         return task;
