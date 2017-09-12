@@ -632,7 +632,10 @@ public abstract class AbstractTask implements TaskInternal, DynamicObjectAware {
 
     @Override
     public void addValidator(TaskValidator validator) {
-        getValidators().add(validator);
+        List<TaskValidator> validators = getValidators();
+        if (!validators.contains(validator)) {
+            validators.add(validator);
+        }
     }
 
     @Override

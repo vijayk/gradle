@@ -20,10 +20,13 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedSet;
 import org.gradle.api.NonNullApi;
 import org.gradle.api.internal.TaskInternal;
+import org.gradle.api.internal.tasks.TaskInputFilePropertySpec;
+import org.gradle.api.internal.tasks.TaskOutputFilePropertySpec;
 import org.gradle.api.internal.tasks.execution.TaskValidator;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -40,10 +43,21 @@ public class TaskClassValidator implements TaskValidator {
         this.cacheable = cacheable;
     }
 
-    public void addInputsAndOutputs(final TaskInternal task) {
+    public void addInputsAndOutputs(TaskInternal task) {
         task.addValidator(this);
+        Set<String> existingProperties = new HashSet<String>();
+        existingProperties.addAll(task.getInputs().getProperties().keySet());
+        for (TaskInputFilePropertySpec taskInputFilePropertySpec : task.getInputs().getFileProperties()) {
+            existingProperties.add(taskInputFilePropertySpec.getPropertyName());
+        }
+        for (TaskOutputFilePropertySpec taskOutputFilePropertySpec : task.getOutputs().getFileProperties()) {
+            existingProperties.add(taskOutputFilePropertySpec.getPropertyName());
+        }
         for (TaskPropertyInfo property : annotatedProperties) {
-            property.getConfigureAction().update(task, property.getName(), new FutureValue(property, task));
+            String propertyName = property.getName();
+            if (!existingProperties.contains(propertyName)) {
+                property.getConfigureAction().update(task, propertyName, new FutureValue(property, task));
+            }
         }
     }
 
