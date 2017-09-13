@@ -62,6 +62,8 @@ import org.gradle.api.internal.artifacts.repositories.resolver.DefaultExternalRe
 import org.gradle.api.internal.artifacts.repositories.resolver.ExternalResourceAccessor;
 import org.gradle.api.internal.artifacts.repositories.transport.RepositoryTransport;
 import org.gradle.api.internal.artifacts.repositories.transport.RepositoryTransportFactory;
+import org.gradle.api.internal.artifacts.vcs.VcsDependencyResolver;
+import org.gradle.api.internal.artifacts.vcs.VcsResolverProviderFactory;
 import org.gradle.api.internal.file.FileLookup;
 import org.gradle.api.internal.file.TemporaryFileProvider;
 import org.gradle.api.internal.file.TmpDirTemporaryFileProvider;
@@ -99,6 +101,9 @@ import org.gradle.internal.resource.local.ivy.LocallyAvailableResourceFinderFact
 import org.gradle.internal.resource.transfer.DefaultUriTextResourceLoader;
 import org.gradle.internal.service.ServiceRegistry;
 import org.gradle.util.BuildCommencedTimeProvider;
+import org.gradle.vcs.internal.VcsMappingFactory;
+import org.gradle.vcs.internal.VcsMappingsInternal;
+import org.gradle.vcs.internal.VersionControlSystemFactory;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -339,5 +344,13 @@ class DependencyManagementBuildScopeServices {
         public ComponentResolvers create(ResolveContext context) {
             return resolver;
         }
+    }
+
+    VcsDependencyResolver createVcsDependencyResolver(VcsMappingsInternal vcsMappingsInternal, VcsMappingFactory vcsMappingFactory, VersionControlSystemFactory versionControlSystemFactory, TemporaryFileProvider temporaryFileProvider) {
+        return new VcsDependencyResolver(vcsMappingsInternal, vcsMappingFactory, versionControlSystemFactory, temporaryFileProvider);
+    }
+
+    ResolverProviderFactory createVcsResolverProviderFactory(VcsDependencyResolver resolver, VcsMappingsInternal vcsMappingsInternal) {
+        return new VcsResolverProviderFactory(resolver, vcsMappingsInternal);
     }
 }
