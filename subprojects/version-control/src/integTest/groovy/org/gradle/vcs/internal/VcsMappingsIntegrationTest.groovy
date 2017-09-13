@@ -17,9 +17,7 @@
 package org.gradle.vcs.internal
 
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
-import org.junit.Ignore
 
-@Ignore
 class VcsMappingsIntegrationTest extends AbstractIntegrationSpec {
     def setup() {
         settingsFile << """
@@ -62,7 +60,7 @@ class VcsMappingsIntegrationTest extends AbstractIntegrationSpec {
         """
         expect:
         succeeds("assemble")
-        file("dep/checkedout").assertIsFile()
+        file("build/vcs/dep/checkedout").assertIsFile()
     }
 
     def "can define and use source repositories with all {}"() {
@@ -81,7 +79,7 @@ class VcsMappingsIntegrationTest extends AbstractIntegrationSpec {
         """
         expect:
         succeeds("assemble")
-        file("dep/checkedout").assertIsFile()
+        file("build/vcs/dep/checkedout").assertIsFile()
     }
 
     def "can define unused vcs mappings"() {
@@ -108,8 +106,8 @@ class VcsMappingsIntegrationTest extends AbstractIntegrationSpec {
         """
         expect:
         succeeds("assemble")
-        file("dep/checkedout").assertDoesNotExist()
-        file("does-not-exist/checkedout").assertDoesNotExist()
+        file("build/vcs/dep/checkedout").assertDoesNotExist()
+        file("build/vcs/does-not-exist/checkedout").assertDoesNotExist()
     }
 
     def "last vcs mapping rule wins"() {
@@ -131,7 +129,7 @@ class VcsMappingsIntegrationTest extends AbstractIntegrationSpec {
         """
         expect:
         succeeds("assemble")
-        file("dep/checkedout").assertIsFile()
-        file("does-not-exist/checkedout").assertDoesNotExist()
+        file("build/vcs/dep/checkedout").assertIsFile()
+        file("build/vcs/does-not-exist/checkedout").assertDoesNotExist()
     }
 }

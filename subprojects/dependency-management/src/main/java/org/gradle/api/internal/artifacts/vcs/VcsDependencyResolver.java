@@ -19,21 +19,25 @@ package org.gradle.api.internal.artifacts.vcs;
 import org.gradle.api.artifacts.component.ComponentIdentifier;
 import org.gradle.api.artifacts.component.SourceComponentIdentifier;
 import org.gradle.api.artifacts.component.SourceComponentSelector;
+import org.gradle.api.initialization.ConfigurableIncludedBuild;
 import org.gradle.api.internal.artifacts.DefaultModuleVersionIdentifier;
 import org.gradle.api.internal.artifacts.component.DefaultBuildIdentifier;
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.ComponentResolvers;
+import org.gradle.api.internal.artifacts.ivyservice.projectmodule.LocalComponentRegistry;
 import org.gradle.api.internal.artifacts.ivyservice.resolveengine.artifact.ArtifactSet;
 import org.gradle.api.internal.artifacts.ivyservice.resolveengine.excludes.ModuleExclusion;
 import org.gradle.api.internal.artifacts.type.ArtifactTypeRegistry;
 import org.gradle.api.internal.component.ArtifactType;
-import org.gradle.api.internal.file.TemporaryFileProvider;
+import org.gradle.composite.internal.IncludedBuildFactory;
+import org.gradle.composite.internal.IncludedBuilds;
+import org.gradle.internal.component.local.model.DefaultProjectComponentIdentifier;
+import org.gradle.internal.component.local.model.LocalComponentMetadata;
 import org.gradle.internal.component.model.ComponentArtifactMetadata;
 import org.gradle.internal.component.model.ComponentOverrideMetadata;
 import org.gradle.internal.component.model.ComponentResolveMetadata;
 import org.gradle.internal.component.model.ConfigurationMetadata;
 import org.gradle.internal.component.model.DependencyMetadata;
 import org.gradle.internal.component.model.ModuleSource;
-import org.gradle.internal.hash.HashUtil;
 import org.gradle.internal.resolve.ModuleVersionResolveException;
 import org.gradle.internal.resolve.resolver.ArtifactResolver;
 import org.gradle.internal.resolve.resolver.ComponentMetaDataResolver;
@@ -43,6 +47,7 @@ import org.gradle.internal.resolve.result.BuildableArtifactResolveResult;
 import org.gradle.internal.resolve.result.BuildableArtifactSetResolveResult;
 import org.gradle.internal.resolve.result.BuildableComponentIdResolveResult;
 import org.gradle.internal.resolve.result.BuildableComponentResolveResult;
+import org.gradle.internal.service.ServiceRegistry;
 import org.gradle.vcs.VersionControlSpec;
 import org.gradle.vcs.VersionControlSystem;
 import org.gradle.vcs.internal.VcsMappingFactory;
@@ -54,16 +59,21 @@ import javax.annotation.Nullable;
 import java.io.File;
 
 public class VcsDependencyResolver implements ComponentMetaDataResolver, DependencyToComponentIdResolver, ArtifactResolver, OriginArtifactSelector, ComponentResolvers {
+    private final ServiceRegistry serviceRegistry;
     private final VcsMappingsInternal vcsMappingsInternal;
     private final VcsMappingFactory vcsMappingFactory;
     private final VersionControlSystemFactory versionControlSystemFactory;
-    private final TemporaryFileProvider temporaryFileProvider;
+    private final File cacheDir;
 
-    public VcsDependencyResolver(VcsMappingsInternal vcsMappingsInternal, VcsMappingFactory vcsMappingFactory, VersionControlSystemFactory versionControlSystemFactory, TemporaryFileProvider temporaryFileProvider) {
+    // TODO: This shouldn't reach into ServiceRegistry
+    public VcsDependencyResolver(ServiceRegistry serviceRegistry, VcsMappingsInternal vcsMappingsInternal, VcsMappingFactory vcsMappingFactory, VersionControlSystemFactory versionControlSystemFactory) {
+        this.serviceRegistry = serviceRegistry;
         this.vcsMappingsInternal = vcsMappingsInternal;
         this.vcsMappingFactory = vcsMappingFactory;
         this.versionControlSystemFactory = versionControlSystemFactory;
-        this.temporaryFileProvider = temporaryFileProvider;
+        // TODO: We need to have a "cache" for repositories in the VCS implementation and a working dir "cache" for included builds
+        // This path shouldn't be hardcoded here
+        this.cacheDir = new File("build");
     }
 
     @Override
@@ -132,18 +142,22 @@ public class VcsDependencyResolver implements ComponentMetaDataResolver, Depende
             VersionControlSystem versionControlSystem = versionControlSystemFactory.create(spec);
             // TODO: We need to manage these working directories so they're shared across projects within a build (if possible)
             // and have some sort of global cache of cloned repositories
-            File workingDir = temporaryFileProvider.newTemporaryFile("vcs", HashUtil.createCompactMD5(spec.getDisplayName()), sourceComponentIdentifier.getBuild().getName());
+            File workingDir = new File(cacheDir, "vcs/" + sourceComponentIdentifier.getBuild().getName());
             versionControlSystem.populate(workingDir, spec);
-
-            result.failed(new ModuleVersionResolveException(DefaultSourceComponentSelector.newSelector(spec, sourceComponentIdentifier.getProjectPath(), sourceComponentIdentifier.getBuild().getName()), identifier + " not supported yet."));
-            // TODO: Populate component registry and implicitly included builds somehow
-            // This is what ProjectDependencyResolver does:
-//            LocalComponentMetadata componentMetaData = localComponentRegistry.getComponent(projectId);
-//            if (componentMetaData == null) {
-//                result.failed(new ModuleVersionResolveException(DefaultProjectComponentSelector.newSelector(projectId), projectId + " not found."));
-//            } else {
-//                result.resolved(componentMetaData);
-//            }
+            // TODO: This should only happen once
+            IncludedBuilds includedBuilds = serviceRegistry.get(IncludedBuilds.class);
+            IncludedBuildFactory includedBuildFactory = serviceRegistry.get(IncludedBuildFactory.class);
+            LocalComponentRegistry localComponentRegistry = serviceRegistry.get(LocalComponentRegistry.class);
+            ConfigurableIncludedBuild includedBuild = includedBuildFactory.createBuild(workingDir);
+            includedBuilds.registerBuild(includedBuild);
+            // TODO: Populate component registry and implicitly include builds
+            LocalComponentMetadata componentMetaData = localComponentRegistry.getComponent(DefaultProjectComponentIdentifier.newProjectId(includedBuild, ":"));
+            if (componentMetaData == null) {
+                // TODO: Error
+                result.failed(new ModuleVersionResolveException(DefaultSourceComponentSelector.newSelector(spec, sourceComponentIdentifier.getProjectPath(), sourceComponentIdentifier.getBuild().getName()), identifier + " not supported yet."));
+            } else {
+                result.resolved(componentMetaData);
+            }
         }
     }
 

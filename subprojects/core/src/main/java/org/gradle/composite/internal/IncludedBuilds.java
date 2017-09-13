@@ -23,4 +23,5 @@ import java.util.Collection;
 public interface IncludedBuilds {
     Collection<IncludedBuild> getBuilds();
     IncludedBuild getBuild(String name);
+    void registerBuild(IncludedBuild build);
 }

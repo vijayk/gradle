@@ -25,6 +25,7 @@ import java.util.Map;
 public class DefaultIncludedBuilds implements IncludedBuilds {
     private final Map<String, IncludedBuild> builds = Maps.newHashMap();
 
+    @Override
     public void registerBuild(IncludedBuild build) {
         builds.put(build.getName(), build);
     }

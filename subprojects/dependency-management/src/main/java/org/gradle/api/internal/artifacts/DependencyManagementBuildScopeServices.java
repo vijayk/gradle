@@ -65,6 +65,7 @@ import org.gradle.api.internal.artifacts.repositories.transport.RepositoryTransp
 import org.gradle.api.internal.artifacts.vcs.VcsDependencyResolver;
 import org.gradle.api.internal.artifacts.vcs.VcsResolverProviderFactory;
 import org.gradle.api.internal.file.FileLookup;
+import org.gradle.api.internal.file.FileResolver;
 import org.gradle.api.internal.file.TemporaryFileProvider;
 import org.gradle.api.internal.file.TmpDirTemporaryFileProvider;
 import org.gradle.api.internal.file.collections.DirectoryFileTreeFactory;
@@ -346,8 +347,8 @@ class DependencyManagementBuildScopeServices {
         }
     }
 
-    VcsDependencyResolver createVcsDependencyResolver(VcsMappingsInternal vcsMappingsInternal, VcsMappingFactory vcsMappingFactory, VersionControlSystemFactory versionControlSystemFactory, TemporaryFileProvider temporaryFileProvider) {
-        return new VcsDependencyResolver(vcsMappingsInternal, vcsMappingFactory, versionControlSystemFactory, temporaryFileProvider);
+    VcsDependencyResolver createVcsDependencyResolver(ServiceRegistry serviceRegistry, VcsMappingsInternal vcsMappingsInternal, VcsMappingFactory vcsMappingFactory, VersionControlSystemFactory versionControlSystemFactory) {
+        return new VcsDependencyResolver(serviceRegistry, vcsMappingsInternal, vcsMappingFactory, versionControlSystemFactory);
     }
 
     ResolverProviderFactory createVcsResolverProviderFactory(VcsDependencyResolver resolver, VcsMappingsInternal vcsMappingsInternal) {
