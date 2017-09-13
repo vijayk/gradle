@@ -19,6 +19,13 @@ package org.gradle.api.plugins.quality
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
 
 class WithoutIA extends AbstractIntegrationSpec {
+    def setup(){
+        buildFile<<'''
+	    apply plugin:"java"
+	    apply plugin:"pmd"
+	    repositories { mavenCentral() }
+	'''
+    }
     def "incremental analysis can be enabled"() {
         given:
         goodCode()
