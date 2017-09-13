@@ -19,9 +19,14 @@ package org.gradle.api.artifacts.component;
 import org.gradle.api.Incubating;
 import org.gradle.vcs.VersionControlSpec;
 
+/**
+ * TODO: An identifier for a component instance that is built from sources.
+ */
 @Incubating
 public interface SourceComponentIdentifier extends ComponentIdentifier {
-    // TODO: return an immutable VersionControlSpec-like thing
+    /**
+     * TODO: return an immutable VersionControlSpec-like thing
+     */
     VersionControlSpec getRepository();
 
     /**

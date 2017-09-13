@@ -99,6 +99,7 @@ public class VcsDependencyResolver implements ComponentMetaDataResolver, Depende
     @Override
     public void resolve(DependencyMetadata dependency, BuildableComponentIdResolveResult result) {
         if (dependency.getSelector() instanceof SourceComponentSelector) {
+            result.failed(new ModuleVersionResolveException(dependency.getSelector(), "not implemented"));
             // TODO: Handle selectors that have already been created by some other means
 //            ProjectComponentSelector selector = (ProjectComponentSelector) dependency.getSelector();
 //            ProjectComponentIdentifier project = componentIdentifierFactory.createProjectComponentIdentifier(selector);
@@ -186,7 +187,7 @@ public class VcsDependencyResolver implements ComponentMetaDataResolver, Depende
 
     @Override
     public void resolveArtifact(ComponentArtifactMetadata artifact, ModuleSource moduleSource, BuildableArtifactResolveResult result) {
-        if (isSourceComponentId(artifact.getComponentId())) {
+//        if (isSourceComponentId(artifact.getComponentId())) {
             // TODO: Need to resolve artifacts from built projects
             // This is what ProjectDependencyResolver does
 //            LocalComponentArtifactMetadata projectArtifact = (LocalComponentArtifactMetadata) artifact;
@@ -197,7 +198,7 @@ public class VcsDependencyResolver implements ComponentMetaDataResolver, Depende
 //            } else {
 //                result.notFound(projectArtifact.getId());
 //            }
-        }
+//        }
     }
 
     private boolean isSourceComponentId(ComponentIdentifier componentId) {
