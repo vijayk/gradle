@@ -24,11 +24,16 @@ import org.gradle.util.DeferredUtil;
 
 import javax.annotation.Nullable;
 import java.io.File;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 
+import static org.gradle.api.internal.tasks.TaskPropertyUtils.noValueSpecifiedFor;
+import static org.gradle.internal.Cast.uncheckedCast;
+
 @NonNullApi
-public class CompositeTaskOutputPropertySpec extends AbstractTaskOutputPropertySpec {
+public class CompositeTaskOutputPropertySpec extends AbstractTaskOutputPropertySpec implements DeclaredTaskOutputFileProperty {
 
     private final OutputType outputType;
     private final Object paths;
@@ -74,6 +79,28 @@ public class CompositeTaskOutputPropertySpec extends AbstractTaskOutputPropertyS
             return Iterators.<TaskOutputFilePropertySpec>singletonIterator(
                 new NonCacheableTaskOutputPropertySpec(taskName, this, resolver, unpackedPaths)
             );
+        }
+    }
+
+    @Override
+    public void validate(Collection<String> messages) {
+        Object paths = DeferredUtil.unpack(this.paths);
+        if (paths == null && !isOptional()) {
+            noValueSpecifiedFor(this, messages);
+        } else {
+            for (File file : toFiles(paths)) {
+                outputType.validate(this, file, messages);
+            }
+        }
+    }
+
+    private static Iterable<File> toFiles(@Nullable Object value) {
+        if (value == null) {
+            return Collections.emptySet();
+        } else if (value instanceof Map) {
+            return uncheckedCast(((Map) value).values());
+        } else {
+            return uncheckedCast(value);
         }
     }
 }

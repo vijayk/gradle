@@ -16,17 +16,13 @@
 package org.gradle.api.internal.project.taskfactory;
 
 import org.gradle.api.internal.TaskInternal;
-import org.gradle.api.internal.tasks.TaskOutputsUtil;
 import org.gradle.api.tasks.OutputFiles;
 import org.gradle.api.tasks.TaskOutputFilePropertyBuilder;
 
-import java.io.File;
 import java.lang.annotation.Annotation;
-import java.util.Collection;
 import java.util.concurrent.Callable;
 
-@SuppressWarnings("deprecation")
-public class OutputFilesPropertyAnnotationHandler extends AbstractPluralOutputPropertyAnnotationHandler {
+public class OutputFilesPropertyAnnotationHandler extends AbstractOutputPropertyAnnotationHandler {
 
     @Override
     public Class<? extends Annotation> getAnnotationType() {
@@ -36,10 +32,5 @@ public class OutputFilesPropertyAnnotationHandler extends AbstractPluralOutputPr
     @Override
     protected TaskOutputFilePropertyBuilder createPropertyBuilder(TaskPropertyActionContext context, TaskInternal task, Callable<Object> futureValue) {
         return task.getOutputs().files(futureValue);
-    }
-
-    @Override
-    protected void doValidate(String propertyName, File file, Collection<String> messages) {
-        TaskOutputsUtil.validateFile(propertyName, file, messages);
     }
 }

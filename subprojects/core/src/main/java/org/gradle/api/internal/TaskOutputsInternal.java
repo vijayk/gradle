@@ -24,6 +24,7 @@ import org.gradle.api.tasks.TaskOutputs;
 
 import javax.annotation.Nullable;
 import java.io.File;
+import java.util.Collection;
 import java.util.Set;
 
 @NonNullApi
@@ -32,6 +33,8 @@ public interface TaskOutputsInternal extends TaskOutputs {
     Spec<? super TaskInternal> getUpToDateSpec();
 
     ImmutableSortedSet<TaskOutputFilePropertySpec> getFileProperties();
+
+    void validate(Collection<String> messages);
 
     /**
      * Returns the output files and directories recorded during the previous execution of the task.

@@ -41,6 +41,7 @@ import org.gradle.api.tasks.TaskOutputFilePropertyBuilder;
 
 import javax.annotation.Nullable;
 import java.io.File;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -61,7 +62,7 @@ public class DefaultTaskOutputs implements TaskOutputsInternal {
     private List<SelfDescribingSpec<TaskInternal>> cacheIfSpecs = new LinkedList<SelfDescribingSpec<TaskInternal>>();
     private List<SelfDescribingSpec<TaskInternal>> doNotCacheIfSpecs = new LinkedList<SelfDescribingSpec<TaskInternal>>();
     private TaskExecutionHistory history;
-    private final List<TaskOutputPropertySpecAndBuilder> filePropertiesInternal = Lists.newArrayList();
+    private final List<DeclaredTaskOutputFileProperty> filePropertiesInternal = Lists.newArrayList();
     private ImmutableSortedSet<TaskOutputFilePropertySpec> fileProperties;
     private final FileResolver resolver;
     private final TaskInternal task;
@@ -248,9 +249,17 @@ public class DefaultTaskOutputs implements TaskOutputsInternal {
         });
     }
 
-    private TaskOutputFilePropertyBuilder addSpec(TaskOutputPropertySpecAndBuilder spec) {
+    private TaskOutputFilePropertyBuilder addSpec(DeclaredTaskOutputFileProperty spec) {
         filePropertiesInternal.add(spec);
         return spec;
+    }
+
+    @Override
+    public void validate(Collection<String> messages) {
+        TaskPropertyUtils.ensurePropertiesHaveNames(filePropertiesInternal);
+        for (DeclaredTaskOutputFileProperty propertySpec : filePropertiesInternal) {
+            propertySpec.validate(messages);
+        }
     }
 
     @Override

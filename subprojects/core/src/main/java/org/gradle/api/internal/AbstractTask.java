@@ -121,8 +121,6 @@ public abstract class AbstractTask implements TaskInternal, DynamicObjectAware {
 
     private final TaskStateInternal state;
 
-    private List<TaskValidator> validators;
-
     private final TaskMutator taskMutator;
     private ObservableList observableActionList;
     private boolean impliesSubProjects;
@@ -630,17 +628,16 @@ public abstract class AbstractTask implements TaskInternal, DynamicObjectAware {
         };
     }
 
+    @Deprecated
     @Override
     public void addValidator(TaskValidator validator) {
-        getValidators().add(validator);
+        throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public List<TaskValidator> getValidators() {
-        if (validators == null) {
-            validators = new ArrayList<TaskValidator>();
-        }
-        return validators;
+        throw new UnsupportedOperationException();
     }
 
     private ContextAwareTaskAction convertClosureToAction(Closure actionClosure, String actionName) {

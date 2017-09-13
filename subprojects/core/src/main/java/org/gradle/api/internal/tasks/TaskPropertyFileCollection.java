@@ -19,20 +19,31 @@ package org.gradle.api.internal.tasks;
 import org.gradle.api.internal.file.CompositeFileCollection;
 import org.gradle.api.internal.file.FileResolver;
 import org.gradle.api.internal.file.collections.FileCollectionResolveContext;
+import org.gradle.util.DeferredUtil;
+
+import java.util.Collection;
+
+import static org.gradle.api.internal.tasks.TaskPropertyUtils.noValueSpecifiedFor;
 
 public class TaskPropertyFileCollection extends CompositeFileCollection {
     private final String taskName;
     private final String type;
     private final TaskFilePropertySpec property;
     private final FileResolver resolver;
+    private final Object declaredPaths;
     private final Object paths;
     private String displayName;
 
     public TaskPropertyFileCollection(String taskName, String type, TaskFilePropertySpec property, FileResolver resolver, Object paths) {
+        this(taskName, type, property, resolver, paths, paths);
+    }
+
+    public TaskPropertyFileCollection(String taskName, String type, TaskFilePropertySpec property, FileResolver resolver, Object declaredPaths, Object paths) {
         this.taskName = taskName;
         this.type = type;
         this.property = property;
         this.resolver = resolver;
+        this.declaredPaths = declaredPaths;
         this.paths = paths;
     }
 
@@ -51,5 +62,16 @@ public class TaskPropertyFileCollection extends CompositeFileCollection {
     @Override
     public void visitContents(FileCollectionResolveContext context) {
         context.push(resolver).add(paths);
+    }
+
+    public void validate(boolean optional, TaskPropertyValidator validator, Collection<String> messages) {
+        Object paths = DeferredUtil.unpack(this.declaredPaths);
+        if (paths == null) {
+            if (!optional) {
+                noValueSpecifiedFor(property, messages);
+            }
+        } else {
+            validator.validate(property, paths, messages);
+        }
     }
 }

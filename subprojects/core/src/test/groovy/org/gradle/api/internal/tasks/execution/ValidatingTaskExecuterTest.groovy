@@ -16,7 +16,9 @@
 package org.gradle.api.internal.tasks.execution
 
 import org.gradle.api.InvalidUserDataException
+import org.gradle.api.internal.TaskInputsInternal
 import org.gradle.api.internal.TaskInternal
+import org.gradle.api.internal.TaskOutputsInternal
 import org.gradle.api.internal.tasks.TaskExecuter
 import org.gradle.api.internal.tasks.TaskExecutionContext
 import org.gradle.api.internal.tasks.TaskStateInternal
@@ -24,20 +26,26 @@ import org.gradle.api.tasks.TaskValidationException
 import spock.lang.Specification
 
 class ValidatingTaskExecuterTest extends Specification {
-    final TaskExecuter target = Mock()
-    final TaskInternal task = Mock()
-    final TaskStateInternal state = Mock()
-    final TaskExecutionContext executionContext = Mock()
-    final TaskValidator validator = Mock()
-    final ValidatingTaskExecuter executer = new ValidatingTaskExecuter(target)
+    def target = Mock(TaskExecuter)
+    def task = Mock(TaskInternal)
+    def state = Mock(TaskStateInternal)
+    def executionContext = Mock(TaskExecutionContext)
+    def inputs = Mock(TaskInputsInternal)
+    def outputs = Mock(TaskOutputsInternal)
+    def executer = new ValidatingTaskExecuter(target)
 
     def executesTaskWhenThereAreNoViolations() {
         when:
         executer.execute(task, state, executionContext)
 
         then:
-        _ * task.validators >> [validator]
-        1 * validator.validate(task, !null)
+        1 * task.getInputs() >> inputs
+        1 * inputs.validate(_)
+
+        1 * task.getOutputs() >> outputs
+        1 * outputs.validate(_)
+
+        then:
         1 * target.execute(task, state, executionContext)
         0 * _
     }
@@ -47,8 +55,13 @@ class ValidatingTaskExecuterTest extends Specification {
         executer.execute(task, state, executionContext)
 
         then:
-        _ * task.validators >> [validator]
-        1 * validator.validate(task, !null) >> { it[1] << 'failure' }
+        1 * task.getInputs() >> inputs
+        1 * inputs.validate(_)
+
+        1 * task.getOutputs() >> outputs
+        1 * outputs.validate(_) >> { it[0].add("failure") }
+
+        then:
         1 * state.setOutcome(!null as Throwable) >> {
             def failure = it[0]
             assert failure instanceof TaskValidationException
@@ -64,8 +77,13 @@ class ValidatingTaskExecuterTest extends Specification {
         executer.execute(task, state, executionContext)
 
         then:
-        _ * task.validators >> [validator]
-        1 * validator.validate(task, !null) >> { it[1] << 'failure1'; it[1] << 'failure2' }
+        1 * task.getInputs() >> inputs
+        1 * inputs.validate(_) >> { it[0].add("failure1") }
+
+        1 * task.getOutputs() >> outputs
+        1 * outputs.validate(_) >> { it[0].add("failure2") }
+
+        then:
         1 * state.setOutcome(!null as Throwable) >> {
             def failure = it[0]
             assert failure instanceof TaskValidationException

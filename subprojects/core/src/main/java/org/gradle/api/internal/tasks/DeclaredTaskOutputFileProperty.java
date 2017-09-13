@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
-package org.gradle.api.internal.project.taskfactory;
+package org.gradle.api.internal.tasks;
 
-public interface TaskPropertyValue {
-    Object getValue();
+import org.gradle.api.tasks.TaskOutputFilePropertyBuilder;
+
+import java.util.Collection;
+
+public interface DeclaredTaskOutputFileProperty extends TaskPropertySpec, TaskOutputFilePropertyBuilder {
+    void validate(Collection<String> messages);
 }

@@ -25,19 +25,27 @@ import org.gradle.api.internal.changedetection.state.PathNormalizationStrategy;
 import org.gradle.api.internal.file.FileResolver;
 import org.gradle.api.tasks.PathSensitivity;
 
+import java.util.Collection;
+
 import static org.gradle.api.internal.changedetection.state.InputPathNormalizationStrategy.ABSOLUTE;
 
 @NonNullApi
-public class DefaultTaskInputFilePropertySpec extends AbstractTaskInputsDeprecatingTaskPropertyBuilder implements TaskInputPropertySpecAndBuilder {
+public class DefaultTaskInputFilePropertySpec extends AbstractTaskInputsDeprecatingTaskPropertyBuilder implements DeclaredTaskInputFileProperty {
 
     private final TaskPropertyFileCollection files;
+    private final TaskPropertyValidator validator;
     private boolean skipWhenEmpty;
     private boolean optional;
     private PathNormalizationStrategy pathNormalizationStrategy = ABSOLUTE;
     private Class<? extends FileCollectionSnapshotter> snapshotter = GenericFileCollectionSnapshotter.class;
 
-    public DefaultTaskInputFilePropertySpec(String taskName, FileResolver resolver, Object paths) {
-        this.files = new TaskPropertyFileCollection(taskName, "input", this, resolver, paths);
+    public DefaultTaskInputFilePropertySpec(String taskName, FileResolver resolver, TaskPropertyValidator validator, Object paths) {
+        this(taskName, resolver, validator, paths, paths);
+    }
+
+    public DefaultTaskInputFilePropertySpec(String taskName, FileResolver resolver, TaskPropertyValidator validator, Object declaredPaths, Object paths) {
+        this.validator = validator;
+        this.files = new TaskPropertyFileCollection(taskName, "input", this, resolver, declaredPaths, paths);
     }
 
     @Override
@@ -106,6 +114,11 @@ public class DefaultTaskInputFilePropertySpec extends AbstractTaskInputsDeprecat
     @Override
     public Class<? extends FileCollectionSnapshotter> getSnapshotter() {
         return snapshotter;
+    }
+
+    @Override
+    public void validate(Collection<String> messages) {
+        files.validate(optional, validator, messages);
     }
 
     @Override

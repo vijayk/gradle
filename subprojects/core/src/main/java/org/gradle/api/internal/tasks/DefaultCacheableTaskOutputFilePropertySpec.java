@@ -17,14 +17,14 @@
 package org.gradle.api.internal.tasks;
 
 import org.gradle.api.NonNullApi;
-import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.file.FileResolver;
 import org.gradle.util.DeferredUtil;
 
 import java.io.File;
+import java.util.Collection;
 
 @NonNullApi
-public class DefaultCacheableTaskOutputFilePropertySpec extends AbstractTaskOutputPropertySpec implements CacheableTaskOutputFilePropertySpec {
+public class DefaultCacheableTaskOutputFilePropertySpec extends AbstractTaskOutputPropertySpec implements CacheableTaskOutputFilePropertySpec, DeclaredTaskOutputFileProperty {
     private final TaskPropertyFileCollection files;
     private final OutputType outputType;
     private final FileResolver resolver;
@@ -38,7 +38,7 @@ public class DefaultCacheableTaskOutputFilePropertySpec extends AbstractTaskOutp
     }
 
     @Override
-    public FileCollection getPropertyFiles() {
+    public TaskPropertyFileCollection getPropertyFiles() {
         return files;
     }
 
@@ -54,5 +54,10 @@ public class DefaultCacheableTaskOutputFilePropertySpec extends AbstractTaskOutp
     @Override
     public OutputType getOutputType() {
         return outputType;
+    }
+
+    @Override
+    public void validate(Collection<String> messages) {
+        files.validate(isOptional(), outputType, messages);
     }
 }

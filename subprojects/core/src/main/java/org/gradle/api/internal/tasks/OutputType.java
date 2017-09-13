@@ -16,6 +16,50 @@
 
 package org.gradle.api.internal.tasks;
 
-public enum OutputType {
-    FILE, DIRECTORY
+import java.io.File;
+import java.util.Collection;
+
+import static org.gradle.api.internal.tasks.TaskPropertyUtils.toFile;
+
+public enum OutputType implements TaskPropertyValidator {
+    FILE() {
+        @Override
+        public void validate(TaskPropertySpec property, Object value, Collection<String> messages) {
+            File file = toFile(value);
+            assert file != null;
+            if (file.exists()) {
+                if (file.isDirectory()) {
+                    messages.add(String.format("Cannot write to file '%s' specified for property '%s' as it is a directory.", file, property.getPropertyName()));
+                }
+                // else, assume we can write to anything that exists and is not a directory
+            } else {
+                for (File candidate = file.getParentFile(); candidate != null && !candidate.isDirectory(); candidate = candidate.getParentFile()) {
+                    if (candidate.exists() && !candidate.isDirectory()) {
+                        messages.add(String.format("Cannot write to file '%s' specified for property '%s', as ancestor '%s' is not a directory.", file, property.getPropertyName(), candidate));
+                        break;
+                    }
+                }
+            }
+        }
+    },
+
+    DIRECTORY() {
+        @Override
+        public void validate(TaskPropertySpec property, Object value, Collection<String> messages) {
+            File directory = toFile(value);
+            assert directory != null;
+            if (directory.exists()) {
+                if (!directory.isDirectory()) {
+                    messages.add(String.format("Directory '%s' specified for property '%s' is not a directory.", directory, property.getPropertyName()));
+                }
+            } else {
+                for (File candidate = directory.getParentFile(); candidate != null && !candidate.isDirectory(); candidate = candidate.getParentFile()) {
+                    if (candidate.exists() && !candidate.isDirectory()) {
+                        messages.add(String.format("Cannot write to directory '%s' specified for property '%s', as ancestor '%s' is not a directory.", directory, property.getPropertyName(), candidate));
+                        return;
+                    }
+                }
+            }
+        }
+    }
 }

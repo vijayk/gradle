@@ -15,16 +15,11 @@
  */
 package org.gradle.api.internal.project.taskfactory;
 
-import org.gradle.api.file.FileSystemLocation;
 import org.gradle.api.internal.TaskInternal;
 import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.TaskInputFilePropertyBuilder;
-import org.gradle.util.DeferredUtil;
 
-import java.io.File;
 import java.lang.annotation.Annotation;
-import java.nio.file.Path;
-import java.util.Collection;
 import java.util.concurrent.Callable;
 
 public class InputFilePropertyAnnotationHandler extends AbstractInputPropertyAnnotationHandler {
@@ -32,28 +27,7 @@ public class InputFilePropertyAnnotationHandler extends AbstractInputPropertyAnn
         return InputFile.class;
     }
 
-    @Override
-    protected void validate(String propertyName, Object value, Collection<String> messages) {
-        File fileValue = toFile(value);
-        if (!fileValue.exists()) {
-            messages.add(String.format("File '%s' specified for property '%s' does not exist.", fileValue, propertyName));
-        } else if (!fileValue.isFile()) {
-            messages.add(String.format("File '%s' specified for property '%s' is not a file.", fileValue, propertyName));
-        }
-    }
-
-    private File toFile(Object value) {
-        Object unpacked = DeferredUtil.unpack(value);
-        if (unpacked instanceof Path) {
-            return ((Path) unpacked).toFile();
-        }
-        if (unpacked instanceof FileSystemLocation) {
-            return ((FileSystemLocation) unpacked).getAsFile();
-        }
-        return (File) unpacked;
-    }
-
     protected TaskInputFilePropertyBuilder createPropertyBuilder(TaskPropertyActionContext context, TaskInternal task, Callable<Object> futureValue) {
-        return task.getInputs().files(futureValue);
+        return task.getInputs().file(futureValue);
     }
 }

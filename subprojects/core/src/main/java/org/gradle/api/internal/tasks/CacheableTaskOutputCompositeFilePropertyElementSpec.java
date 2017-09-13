@@ -26,13 +26,13 @@ import java.io.File;
 import java.util.Collections;
 
 class CacheableTaskOutputCompositeFilePropertyElementSpec implements CacheableTaskOutputFilePropertySpec {
-    private final CompositeTaskOutputPropertySpec parentProperty;
+    private final CompositeTaskOutputPropertySpec parent;
     private final String propertySuffix;
     private final FileCollection files;
     private final File file;
 
-    public CacheableTaskOutputCompositeFilePropertyElementSpec(CompositeTaskOutputPropertySpec parentProperty, String propertySuffix, File file) {
-        this.parentProperty = parentProperty;
+    public CacheableTaskOutputCompositeFilePropertyElementSpec(CompositeTaskOutputPropertySpec parent, String propertySuffix, File file) {
+        this.parent = parent;
         this.propertySuffix = propertySuffix;
         this.files = new SimpleFileCollection(Collections.singleton(file));
         this.file = file;
@@ -40,7 +40,7 @@ class CacheableTaskOutputCompositeFilePropertyElementSpec implements CacheableTa
 
     @Override
     public String getPropertyName() {
-        return parentProperty.getPropertyName() + propertySuffix;
+        return parent.getPropertyName() + propertySuffix;
     }
 
     @Override
@@ -55,12 +55,12 @@ class CacheableTaskOutputCompositeFilePropertyElementSpec implements CacheableTa
 
     @Override
     public OutputType getOutputType() {
-        return parentProperty.getOutputType();
+        return parent.getOutputType();
     }
 
     @Override
     public PathNormalizationStrategy getPathNormalizationStrategy() {
-        return parentProperty.getPathNormalizationStrategy();
+        return parent.getPathNormalizationStrategy();
     }
 
     @Override

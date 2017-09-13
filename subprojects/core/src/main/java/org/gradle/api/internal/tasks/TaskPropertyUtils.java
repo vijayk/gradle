@@ -19,9 +19,13 @@ package org.gradle.api.internal.tasks;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Sets;
 import org.gradle.api.NonNullApi;
+import org.gradle.api.file.FileSystemLocation;
 import org.gradle.api.tasks.TaskFilePropertyBuilder;
 import org.gradle.internal.Cast;
 
+import javax.annotation.Nullable;
+import java.io.File;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.SortedSet;
@@ -62,5 +66,21 @@ public class TaskPropertyUtils {
             builder.add(new ResolvedTaskOutputFilePropertySpec(cacheableProperty.getPropertyName(), cacheableProperty.getOutputType(), cacheableProperty.getOutputFile()));
         }
         return builder.build();
+    }
+
+    @Nullable
+    @SuppressWarnings("Since15")
+    public static File toFile(@Nullable Object value) {
+        if (value instanceof java.nio.file.Path) {
+            return ((java.nio.file.Path) value).toFile();
+        }
+        if (value instanceof FileSystemLocation) {
+            return ((FileSystemLocation) value).getAsFile();
+        }
+        return (File) value;
+    }
+
+    public static void noValueSpecifiedFor(TaskPropertySpec property, Collection<String> messages) {
+        messages.add(String.format("No value has been specified for property '%s'.", property.getPropertyName()));
     }
 }

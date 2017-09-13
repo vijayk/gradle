@@ -18,8 +18,16 @@ package org.gradle.api.internal;
 
 import com.google.common.collect.ImmutableSortedSet;
 import org.gradle.api.internal.tasks.TaskInputFilePropertySpec;
+import org.gradle.api.tasks.TaskInputFilePropertyBuilder;
 import org.gradle.api.tasks.TaskInputs;
+
+import java.util.Collection;
+import java.util.concurrent.Callable;
 
 public interface TaskInputsInternal extends TaskInputs {
     ImmutableSortedSet<TaskInputFilePropertySpec> getFileProperties();
+
+    TaskInputFilePropertyBuilder files(Callable<Object> futureValue);
+
+    void validate(Collection<String> messages);
 }
