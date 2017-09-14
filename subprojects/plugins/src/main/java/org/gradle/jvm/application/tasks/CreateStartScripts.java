@@ -275,7 +275,7 @@ public class CreateStartScripts extends ConventionTask {
     }
 
     @Input
-    private Iterable<String> getRelativeClasspath() {
+    public Iterable<String> getRelativeClasspath() {
         //a list instance is needed here, as org.gradle.api.internal.changedetection.state.ValueSnapshotter.processValue() does not support
         //serializing Iterators directly
         return Lists.newArrayList(Iterables.transform(getClasspath().getFiles(), new Function<File, String>() {
