@@ -16,6 +16,8 @@
 
 package org.gradle.internal.logging.console.taskgrouping
 
+import static org.gradle.api.logging.configuration.ConsoleOutput.*
+
 class ConsoleGradleBuildGroupedTaskFunctionalTest extends AbstractConsoleGroupedTaskFunctionalTest {
 
     private static final String HELLO_WORLD_MESSAGE = 'Hello world'
@@ -45,12 +47,19 @@ class ConsoleGradleBuildGroupedTaskFunctionalTest extends AbstractConsoleGrouped
         file(externalBuildScriptPath) << externalBuildScript()
 
         when:
+        executer.withConsole(mode)
         succeeds(AGGREGATE_TASK_NAME)
 
         then:
         result.groupedOutput.task(':helloWorld').output == HELLO_WORLD_MESSAGE
         result.groupedOutput.task(":external:important").output == IMPORTANT_MESSAGE
         result.groupedOutput.task(':byeWorld').output == BYE_WORLD_MESSAGE
+        result.groupedOutput.hasTask(':silence') == hasSilenceTaskOutput
+
+        where:
+        mode    | hasSilenceTaskOutput
+        Rich    | false
+        Verbose | true
     }
 
     static String mainBuildScript(String externalBuildScript) {
@@ -76,8 +85,11 @@ class ConsoleGradleBuildGroupedTaskFunctionalTest extends AbstractConsoleGrouped
                 }
             }
             
+            task silence {
+            }
+            
             task $AGGREGATE_TASK_NAME {
-                dependsOn helloWorld, otherBuild, byeWorld
+                dependsOn helloWorld, otherBuild, byeWorld, silence
             }
         """
     }

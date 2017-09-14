@@ -481,14 +481,14 @@ public class DefaultLoggingManagerTest extends Specification {
         def snapshot = Stub(LoggingSystem.Snapshot)
         def output = Stub(OutputStream)
 
-        loggingManager.attachAnsiConsole(output)
+        loggingManager.attachAnsiConsole(output, false)
 
         when:
         loggingManager.start()
 
         then:
         1 * loggingRouter.snapshot() >> snapshot
-        1 * loggingRouter.attachAnsiConsole(output)
+        1 * loggingRouter.attachAnsiConsole(output, false)
         0 * loggingRouter._
 
         when:
@@ -511,10 +511,10 @@ public class DefaultLoggingManagerTest extends Specification {
         0 * loggingRouter._
 
         when:
-        loggingManager.attachAnsiConsole(output)
+        loggingManager.attachAnsiConsole(output, false)
 
         then:
-        1 * loggingRouter.attachAnsiConsole(output)
+        1 * loggingRouter.attachAnsiConsole(output, false)
         0 * loggingRouter._
 
         when:

@@ -290,7 +290,7 @@ public class InProcessGradleExecuter extends AbstractGradleExecuter {
                     public void endOfStream(@Nullable Throwable failure) {
 
                     }
-                }));
+                }), startParameter.getConsoleOutput() == ConsoleOutput.Verbose);
             } else {
                 loggingManager.addStandardOutputListener(outputListener);
                 loggingManager.addStandardErrorListener(errorListener);

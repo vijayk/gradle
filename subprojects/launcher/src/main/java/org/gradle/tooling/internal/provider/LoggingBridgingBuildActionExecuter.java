@@ -42,7 +42,7 @@ public class LoggingBridgingBuildActionExecuter implements BuildActionExecuter<P
 
     public Object execute(BuildAction action, BuildRequestContext buildRequestContext, ProviderOperationParameters actionParameters, ServiceRegistry contextServices) {
         if (Boolean.TRUE.equals(actionParameters.isColorOutput(null)) && actionParameters.getStandardOutput() != null) {
-            loggingManager.attachAnsiConsole(actionParameters.getStandardOutput());
+            loggingManager.attachAnsiConsole(actionParameters.getStandardOutput(), false);
         } else {
             if (actionParameters.getStandardOutput() != null) {
                 loggingManager.addStandardOutputListener(actionParameters.getStandardOutput());

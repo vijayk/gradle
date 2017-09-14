@@ -188,8 +188,9 @@ public class DefaultLoggingManager implements LoggingManagerInternal, Closeable 
         loggingRouter.attachProcessConsole(consoleOutput);
     }
 
-    public void attachAnsiConsole(OutputStream outputStream) {
-        loggingRouter.attachAnsiConsole(outputStream);
+    @Override
+    public void attachAnsiConsole(OutputStream outputStream, boolean verbose) {
+        loggingRouter.attachAnsiConsole(outputStream, verbose);
     }
 
     public void attachSystemOutAndErr() {
@@ -202,6 +203,7 @@ public class DefaultLoggingManager implements LoggingManagerInternal, Closeable 
         private LoggingSystem.Snapshot originalState;
         private ConsoleOutput consoleOutput;
         private OutputStream consoleOutputStream;
+        private boolean verbose;
 
         public StartableLoggingRouter(LoggingRouter loggingRouter) {
             this.loggingRouter = loggingRouter;
@@ -216,7 +218,7 @@ public class DefaultLoggingManager implements LoggingManagerInternal, Closeable 
                 loggingRouter.attachProcessConsole(consoleOutput);
             }
             if (consoleOutputStream != null) {
-                loggingRouter.attachAnsiConsole(consoleOutputStream);
+                loggingRouter.attachAnsiConsole(consoleOutputStream, verbose);
             }
         }
 
@@ -235,7 +237,7 @@ public class DefaultLoggingManager implements LoggingManagerInternal, Closeable 
             this.consoleOutput = consoleOutput;
         }
 
-        public void attachAnsiConsole(OutputStream outputStream) {
+        public void attachAnsiConsole(OutputStream outputStream, boolean verbose) {
             if (this.consoleOutputStream == outputStream) {
                 return;
             }
@@ -245,9 +247,10 @@ public class DefaultLoggingManager implements LoggingManagerInternal, Closeable 
 
             if (originalState != null) {
                 // Already started
-                loggingRouter.attachAnsiConsole(outputStream);
+                loggingRouter.attachAnsiConsole(outputStream, verbose);
             }
             this.consoleOutputStream = outputStream;
+            this.verbose = verbose;
         }
 
         public void setLevel(LogLevel logLevel) {
