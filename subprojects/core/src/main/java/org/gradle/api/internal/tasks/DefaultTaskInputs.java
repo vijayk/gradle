@@ -30,6 +30,7 @@ import org.gradle.api.internal.file.collections.FileCollectionResolveContext;
 import org.gradle.api.tasks.TaskInputFilePropertyBuilder;
 import org.gradle.api.tasks.TaskInputPropertyBuilder;
 import org.gradle.api.tasks.TaskInputs;
+import org.gradle.util.DeferredUtil;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
@@ -239,6 +240,7 @@ public class DefaultTaskInputs implements TaskInputsInternal {
         }
 
         public void validate(Collection<String> messages) {
+            Object value = DeferredUtil.unpack(this.value);
             if (value == null && !propertySpec.isOptional()) {
                 noValueSpecifiedFor(propertySpec, messages);
             }
