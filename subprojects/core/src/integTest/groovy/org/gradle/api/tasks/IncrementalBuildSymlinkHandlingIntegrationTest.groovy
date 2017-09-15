@@ -19,7 +19,6 @@ package org.gradle.api.tasks
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
 import org.gradle.util.Requires
 import org.gradle.util.TestPrecondition
-import spock.lang.Ignore
 
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
@@ -123,31 +122,14 @@ task work {
         result.assertTasksSkipped(":work")
     }
 
-    // TODO Make this fail?
-    @Ignore
     def "symlink may reference missing input file"() {
-        def inFile = file("other")
         def link = file("in.txt")
         link.createLink("other")
         assert !link.exists()
 
         given:
-        run("work")
-        run("work")
-        result.assertTasksSkipped(":work")
-
-        when:
-        inFile.text = 'new content'
-        run("work")
-
-        then:
-        result.assertTasksNotSkipped(":work")
-
-        when:
-        run("work")
-
-        then:
-        result.assertTasksSkipped(":work")
+        fails("work")
+        failure.assertHasCause "File '$link' specified for property '\$1' does not exist."
     }
 
     def "can replace input file with symlink to file with same content"() {
