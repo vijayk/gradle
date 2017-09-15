@@ -19,6 +19,7 @@ package org.gradle.api.internal.project.taskfactory;
 import org.gradle.api.internal.TaskInternal;
 import org.gradle.internal.Factory;
 import org.gradle.internal.reflect.JavaReflectionUtil;
+import org.gradle.util.DeferredUtil;
 import org.gradle.util.DeprecationLogger;
 
 import java.lang.annotation.Annotation;
@@ -96,7 +97,7 @@ public class TaskPropertyInfo implements Comparable<TaskPropertyInfo> {
 
         final Object value = DeprecationLogger.whileDisabled(new Factory<Object>() {
             public Object create() {
-                return JavaReflectionUtil.method(Object.class, method).invoke(bean);
+                return DeferredUtil.unpack(JavaReflectionUtil.method(Object.class, method).invoke(bean));
             }
         });
 
