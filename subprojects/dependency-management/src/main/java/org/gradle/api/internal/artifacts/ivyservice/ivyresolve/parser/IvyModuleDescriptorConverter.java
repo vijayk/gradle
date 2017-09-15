@@ -141,6 +141,7 @@ public class IvyModuleDescriptorConverter {
             false,
             dependencyDescriptor.isChanging(),
             dependencyDescriptor.isTransitive(),
+            false,
             configMappings,
             artifacts,
             excludes));

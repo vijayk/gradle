@@ -55,6 +55,8 @@ public class LocalComponentDependencyMetadata implements LocalOriginDependencyMe
     private final boolean force;
     private final boolean changing;
     private final boolean transitive;
+    private final boolean optional;
+
     private final AttributeContainer moduleAttributes;
 
     public LocalComponentDependencyMetadata(ComponentSelector selector, ModuleVersionSelector requested,
@@ -62,7 +64,7 @@ public class LocalComponentDependencyMetadata implements LocalOriginDependencyMe
                                             AttributeContainer moduleAttributes,
                                             String dependencyConfiguration,
                                             Set<IvyArtifactName> artifactNames, List<Exclude> excludes,
-                                            boolean force, boolean changing, boolean transitive) {
+                                            boolean force, boolean changing, boolean transitive, boolean optional) {
         this.selector = selector;
         this.requested = requested;
         this.moduleConfiguration = moduleConfiguration;
@@ -73,6 +75,7 @@ public class LocalComponentDependencyMetadata implements LocalOriginDependencyMe
         this.force = force;
         this.changing = changing;
         this.transitive = transitive;
+        this.optional = optional;
     }
 
     @Override
@@ -179,6 +182,11 @@ public class LocalComponentDependencyMetadata implements LocalOriginDependencyMe
     }
 
     @Override
+    public boolean isOptional() {
+        return optional;
+    }
+
+    @Override
     public String getDynamicConstraintVersion() {
         return requested.getVersion();
     }
@@ -230,7 +238,7 @@ public class LocalComponentDependencyMetadata implements LocalOriginDependencyMe
     }
 
     private LocalOriginDependencyMetadata copyWithTarget(ComponentSelector selector, ModuleVersionSelector requested) {
-        return new LocalComponentDependencyMetadata(selector, requested, moduleConfiguration, moduleAttributes, dependencyConfiguration, artifactNames, excludes, force, changing, transitive);
+        return new LocalComponentDependencyMetadata(selector, requested, moduleConfiguration, moduleAttributes, dependencyConfiguration, artifactNames, excludes, force, changing, transitive, optional);
     }
 
     private static class ClientAttributesPreservingConfigurationMetadata implements LocalConfigurationMetadata {

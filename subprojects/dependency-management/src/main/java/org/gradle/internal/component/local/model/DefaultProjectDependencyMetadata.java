@@ -85,6 +85,11 @@ public class DefaultProjectDependencyMetadata implements DependencyMetadata {
     }
 
     @Override
+    public boolean isOptional() {
+        return false;
+    }
+
+    @Override
     public boolean isTransitive() {
         return delegate.isTransitive();
     }

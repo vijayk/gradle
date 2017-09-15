@@ -26,6 +26,7 @@ import org.gradle.api.artifacts.ModuleVersionSelector;
 import org.gradle.api.artifacts.component.ComponentIdentifier;
 import org.gradle.api.artifacts.component.ComponentSelector;
 import org.gradle.api.artifacts.result.ComponentSelectionReason;
+import org.gradle.api.internal.artifacts.DefaultModuleIdentifier;
 import org.gradle.api.internal.artifacts.ImmutableModuleIdentifierFactory;
 import org.gradle.api.internal.artifacts.ResolveContext;
 import org.gradle.api.internal.artifacts.ResolvedConfigurationIdentifier;
@@ -531,6 +532,7 @@ public class DependencyGraphBuilder {
         private final ModuleExclusions moduleExclusions;
         private final DeselectVersionAction deselectVersionAction = new DeselectVersionAction(this);
         private final ReplaceSelectionWithConflictResultAction replaceSelectionWithConflictResultAction;
+        private final Map<ModuleIdentifier, PendingOptionalDependencies> optionalDependencies = Maps.newHashMap();
 
         public ResolveState(IdGenerator<Long> idGenerator, ComponentResolveResult rootResult, String rootConfigurationName, DependencyToComponentIdResolver idResolver,
                             ComponentMetaDataResolver metaDataResolver, Spec<? super DependencyMetadata> edgeFilter, AttributesSchemaInternal attributesSchema,
@@ -547,7 +549,7 @@ public class DependencyGraphBuilder {
             root = new RootNode(idGenerator.generateId(), rootVersion, new ResolvedConfigurationIdentifier(rootVersion.id, rootConfigurationName), this);
             nodes.put(root.id, root);
             root.component.module.select(root.component);
-            this.replaceSelectionWithConflictResultAction  = new ReplaceSelectionWithConflictResultAction(this);
+            this.replaceSelectionWithConflictResultAction = new ReplaceSelectionWithConflictResultAction(this);
         }
 
         public Collection<ModuleResolveState> getModules() {
@@ -887,12 +889,10 @@ public class DependencyGraphBuilder {
             state = ModuleState.New;
             module.selected = null;
             for (NodeState node : nodes) {
-                for (EdgeState edge : node.incomingEdges) {
-                    resetSelection(edge);
-                }
+                resetSelection(node);
             }
             for (EdgeState edge : module.unattachedDependencies) {
-                resetSelection(edge);
+                resetSelectionState(edge.from);
             }
             module.unattachedDependencies.clear();
             for (SelectorState selector : module.selectors) {
@@ -900,19 +900,9 @@ public class DependencyGraphBuilder {
             }
         }
 
-        /**
-         * Resets the state of selection of an edge, making it possible to
-         * re-resolve it, in case the result of selection might be different.
-         * This would happen if new information has been made available to
-         * selectors during the visit of the dependency graph.
-         *
-         * @param edge the edge for which we need to reset state. The origin node of the edge is automatically re-queued for resolution.
-         */
-        private void resetSelection(EdgeState edge) {
-            if (edge.selector.selected != null) {
-                edge.from.previousTraversalExclusions = null;
-                edge.from.outgoingEdges.clear();
-                module.resolveState.onMoreSelected(edge.from);
+        private void resetSelection(NodeState node) {
+            for (EdgeState edge : node.incomingEdges) {
+                resetSelectionState(edge.from);
             }
         }
 
@@ -931,6 +921,12 @@ public class DependencyGraphBuilder {
             }
             return incoming;
         }
+    }
+
+    private static void resetSelectionState(NodeState node) {
+        node.previousTraversalExclusions = null;
+        node.outgoingEdges.clear();
+        node.component.module.resolveState.onMoreSelected(node);
     }
 
     enum VisitState {
@@ -1065,15 +1061,45 @@ public class DependencyGraphBuilder {
                 removeOutgoingEdges();
             }
 
+            List<PendingOptionalDependencies> noLongerOptional = null;
             for (DependencyMetadata dependency : metaData.getDependencies()) {
                 if (isExcluded(resolutionFilter, dependency)) {
                     continue;
                 }
+                ModuleVersionSelector requested = dependency.getRequested();
+                ModuleIdentifier key = DefaultModuleIdentifier.newId(
+                    requested.getGroup(),
+                    requested.getName()
+                );
+                PendingOptionalDependencies pendingOptionalDependencies = resolveState.optionalDependencies.get(key);
+                if (dependency.isOptional()) {
+                    if (pendingOptionalDependencies == null || pendingOptionalDependencies.isPending()) {
+                        if (pendingOptionalDependencies == null) {
+                            pendingOptionalDependencies = new PendingOptionalDependencies();
+                            resolveState.optionalDependencies.put(key, pendingOptionalDependencies);
+                        }
+                        pendingOptionalDependencies.addNode(this);
+                        continue;
+                    }
+                } else if (pendingOptionalDependencies != null && pendingOptionalDependencies.isPending()) {
+                    if (noLongerOptional == null) {
+                        noLongerOptional = Lists.newLinkedList();
+                    }
+                    noLongerOptional.add(pendingOptionalDependencies);
+                }
+
                 EdgeState dependencyEdge = new EdgeState(this, dependency, resolutionFilter, resolveState);
                 outgoingEdges.add(dependencyEdge);
                 target.add(dependencyEdge);
+                resolveState.optionalDependencies.put(key, PendingOptionalDependencies.NOT_OPTIONAL);
             }
             previousTraversalExclusions = resolutionFilter;
+            if (noLongerOptional != null) {
+                // we must do this after `previousTraversalExclusions` has been written, or state won't be reset properly
+                for (PendingOptionalDependencies optionalDependencies : noLongerOptional) {
+                    optionalDependencies.turnIntoHardDependencies();
+                }
+            }
         }
 
         private boolean isExcluded(ModuleExclusion selector, DependencyMetadata dependency) {
@@ -1348,6 +1374,42 @@ public class DependencyGraphBuilder {
                     }
                 });
             }
+        }
+    }
+
+    private static class PendingOptionalDependencies {
+        private static final PendingOptionalDependencies NOT_OPTIONAL = new PendingOptionalDependencies(null);
+
+        boolean noLongerOptional;
+        private final Set<NodeState> affectedComponents;
+
+        private PendingOptionalDependencies() {
+            this(Sets.<NodeState>newLinkedHashSet());
+        }
+
+        public PendingOptionalDependencies(Set<NodeState> nodeStates) {
+            this.affectedComponents = nodeStates;
+            if (nodeStates == null) {
+                noLongerOptional = true;
+            }
+        }
+
+        void addNode(NodeState state) {
+            if (noLongerOptional) {
+                throw new IllegalStateException("Cannot add a pending node for a dependency which is not optional");
+            }
+            affectedComponents.add(state);
+        }
+
+        void turnIntoHardDependencies() {
+            noLongerOptional = true;
+            for (NodeState affectedComponent : affectedComponents) {
+                resetSelectionState(affectedComponent);
+            }
+        }
+
+        public boolean isPending() {
+            return !noLongerOptional;
         }
     }
 }
