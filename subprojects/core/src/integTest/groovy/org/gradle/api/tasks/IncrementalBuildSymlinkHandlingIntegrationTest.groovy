@@ -19,6 +19,7 @@ package org.gradle.api.tasks
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
 import org.gradle.util.Requires
 import org.gradle.util.TestPrecondition
+import spock.lang.Ignore
 
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
@@ -122,6 +123,8 @@ task work {
         result.assertTasksSkipped(":work")
     }
 
+    // TODO Make this fail?
+    @Ignore
     def "symlink may reference missing input file"() {
         def inFile = file("other")
         def link = file("in.txt")
