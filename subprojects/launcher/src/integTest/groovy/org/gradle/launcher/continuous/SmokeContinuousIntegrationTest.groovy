@@ -133,7 +133,8 @@ class SmokeContinuousIntegrationTest extends Java7RequiringContinuousIntegration
 
     def "does not trigger when changes is made to task that is not required"() {
         given:
-        def aFile = file("a")
+        def aFile = file("a").touch()
+        def bFile = file("b").touch()
 
         when:
         buildFile << """

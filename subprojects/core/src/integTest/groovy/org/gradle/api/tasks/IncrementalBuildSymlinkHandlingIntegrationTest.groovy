@@ -48,6 +48,7 @@ task work {
     }
 
     def "uses the target of symlink for input file content"() {
+        file("in-dir").createDir()
         def inFile = file("other").createFile()
         def link = file("in.txt")
         link.createLink("other")
@@ -72,6 +73,7 @@ task work {
     }
 
     def "uses the target of symlink for input directory content"() {
+        file('in.txt').touch()
         def inDir = file("other").createDir()
         def inFile = inDir.file("file").createFile()
         file("in-dir").createLink("other")
@@ -96,6 +98,7 @@ task work {
     }
 
     def "follows symlinks in input directories"() {
+        file('in.txt').touch()
         def inFile = file("other").createFile()
         def inDir = file("in-dir").createDir()
         inDir.file("file").createLink("../other")
@@ -145,6 +148,7 @@ task work {
     }
 
     def "can replace input file with symlink to file with same content"() {
+        file("in-dir").createDir()
         def inFile = file("in.txt").createFile()
         def copy = file("other")
 
@@ -178,6 +182,7 @@ task work {
     }
 
     def "can replace input directory with symlink to directory with same content"() {
+        file('in.txt').touch()
         def inDir = file("in-dir").createDir()
         inDir.file("file").createFile()
         def copy = file("other")
@@ -212,6 +217,8 @@ task work {
     }
 
     def "can replace output file with symlink to file with same content"() {
+        file('in.txt').touch()
+        file("in-dir").createDir()
         def outFile = file("out.txt")
         def copy = file("other")
 
@@ -245,6 +252,8 @@ task work {
     }
 
     def "can replace output directory with symlink to directory with same content"() {
+        file('in.txt').touch()
+        file("in-dir").createDir()
         def outDir = file("out-dir")
         def copy = file("other")
 
