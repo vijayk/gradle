@@ -97,27 +97,27 @@ public class TaskPropertyInfo implements Comparable<TaskPropertyInfo> {
 
         final Object value = DeprecationLogger.whileDisabled(new Factory<Object>() {
             public Object create() {
-                return DeferredUtil.unpack(JavaReflectionUtil.method(Object.class, method).invoke(bean));
+                return JavaReflectionUtil.method(Object.class, method).invoke(bean);
             }
         });
 
         return new TaskPropertyValue() {
             @Override
             public Object getValue() {
-                return value;
+                return DeferredUtil.unpack(value);
             }
 
             @Override
             public void checkNotNull(Collection<String> messages) {
-                if (value == null && !optional) {
+                if (getValue() == null && !optional) {
                     messages.add(String.format("No value has been specified for property '%s'.", propertyName));
                 }
             }
 
             @Override
             public void checkValid(Collection<String> messages) {
-                if (value != null) {
-                    validationAction.validate(propertyName, value, messages);
+                if (getValue() != null) {
+                    validationAction.validate(propertyName, getValue(), messages);
                 }
             }
         };
