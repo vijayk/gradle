@@ -16,9 +16,11 @@
 
 package org.gradle.vcs.git;
 
+import org.gradle.internal.UncheckedException;
 import org.gradle.vcs.VersionControlSpec;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 
 /**
  * A specification of a Git repository.
@@ -44,6 +46,17 @@ public class GitVersionControlSpec implements VersionControlSpec {
      */
     public void setUrl(URI url) {
         this.url = url;
+    }
+
+    /**
+     * Sets the URL of the repository.
+     */
+    public void setUrl(String url) {
+        try {
+            setUrl(new URI(url));
+        } catch (URISyntaxException e) {
+            throw new UncheckedException(e);
+        }
     }
 
     @Override

@@ -16,34 +16,11 @@
 
 package org.gradle.vcs.internal
 
-import org.gradle.integtests.fixtures.AbstractIntegrationSpec
-
-class VcsMappingsIntegrationTest extends AbstractIntegrationSpec {
+class VcsMappingsIntegrationTest extends AbstractVcsIntegrationTest {
     def setup() {
         settingsFile << """
             import ${DirectoryRepository.canonicalName}
         """
-        buildFile << """
-            apply plugin: 'java'
-            group = 'org.gradle'
-            version = '2.0'
-            
-            dependencies {
-                compile "org.test:dep:1.0"
-            }
-        """
-        file("src/main/java/Main.java") << """
-            public class Main {
-                Dep dep = null;
-            }
-        """
-        buildTestFixture.withBuildInSubDir()
-        singleProjectBuild("dep") {
-            buildFile << """
-                apply plugin: 'java'
-            """
-            file("src/main/java/Dep.java") << "public class Dep {}"
-        }
     }
 
     def "can define and use source repositories"() {

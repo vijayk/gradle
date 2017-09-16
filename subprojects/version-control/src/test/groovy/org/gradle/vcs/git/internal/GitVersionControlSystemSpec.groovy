@@ -17,7 +17,7 @@
 package org.gradle.vcs.git.internal
 
 import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider
-import org.gradle.vcs.fixtures.TemporaryGitRepository
+import org.gradle.vcs.fixtures.GitRepository
 import org.gradle.vcs.git.GitVersionControlSpec
 import org.junit.Rule
 import spock.lang.Specification
@@ -29,7 +29,7 @@ class GitVersionControlSystemSpec extends Specification {
     TestNameTestDirectoryProvider tmpDir = new TestNameTestDirectoryProvider()
 
     @Rule
-    TemporaryGitRepository repo = new TemporaryGitRepository(tmpDir)
+    GitRepository repo = new GitRepository(tmpDir)
 
     def setup() {
         gitVcs = new GitVersionControlSystem()
