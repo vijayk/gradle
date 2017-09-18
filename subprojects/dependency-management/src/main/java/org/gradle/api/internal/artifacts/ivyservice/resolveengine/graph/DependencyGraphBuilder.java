@@ -1031,12 +1031,7 @@ public class DependencyGraphBuilder {
             }
 
             boolean hasIncomingEdges = !incomingEdges.isEmpty();
-            List<EdgeState> transitiveIncoming = hasIncomingEdges ? new ArrayList<EdgeState>() : Collections.<EdgeState>emptyList();
-            for (EdgeState edge : incomingEdges) {
-                if (edge.isTransitive()) {
-                    transitiveIncoming.add(edge);
-                }
-            }
+            List<EdgeState> transitiveIncoming = computeTransitiveIncomingEdges(hasIncomingEdges);
 
             if (transitiveIncoming.isEmpty() && this != resolveState.root) {
                 if (previousTraversalExclusions != null) {
@@ -1061,45 +1056,31 @@ public class DependencyGraphBuilder {
                 removeOutgoingEdges();
             }
 
-            List<PendingOptionalDependencies> noLongerOptional = null;
+            boolean isOptionalConfiguration = "optional".equals(metaData.getName());
+            OptionalDependenciesHandler optionalDependenciesHandler = new OptionalDependenciesHandler(resolveState, isOptionalConfiguration);
             for (DependencyMetadata dependency : metaData.getDependencies()) {
                 if (isExcluded(resolutionFilter, dependency)) {
                     continue;
                 }
-                ModuleVersionSelector requested = dependency.getRequested();
-                ModuleIdentifier key = DefaultModuleIdentifier.newId(
-                    requested.getGroup(),
-                    requested.getName()
-                );
-                PendingOptionalDependencies pendingOptionalDependencies = resolveState.optionalDependencies.get(key);
-                if (dependency.isOptional()) {
-                    if (pendingOptionalDependencies == null || pendingOptionalDependencies.isPending()) {
-                        if (pendingOptionalDependencies == null) {
-                            pendingOptionalDependencies = new PendingOptionalDependencies();
-                            resolveState.optionalDependencies.put(key, pendingOptionalDependencies);
-                        }
-                        pendingOptionalDependencies.addNode(this);
-                        continue;
-                    }
-                } else if (pendingOptionalDependencies != null && pendingOptionalDependencies.isPending()) {
-                    if (noLongerOptional == null) {
-                        noLongerOptional = Lists.newLinkedList();
-                    }
-                    noLongerOptional.add(pendingOptionalDependencies);
+                if (!optionalDependenciesHandler.maybeAddAsOptionalDependency(this, dependency)) {
+                    EdgeState dependencyEdge = new EdgeState(this, dependency, resolutionFilter, resolveState);
+                    outgoingEdges.add(dependencyEdge);
+                    target.add(dependencyEdge);
                 }
-
-                EdgeState dependencyEdge = new EdgeState(this, dependency, resolutionFilter, resolveState);
-                outgoingEdges.add(dependencyEdge);
-                target.add(dependencyEdge);
-                resolveState.optionalDependencies.put(key, PendingOptionalDependencies.NOT_OPTIONAL);
             }
             previousTraversalExclusions = resolutionFilter;
-            if (noLongerOptional != null) {
-                // we must do this after `previousTraversalExclusions` has been written, or state won't be reset properly
-                for (PendingOptionalDependencies optionalDependencies : noLongerOptional) {
-                    optionalDependencies.turnIntoHardDependencies();
+            // we must do this after `previousTraversalExclusions` has been written, or state won't be reset properly
+            optionalDependenciesHandler.complete();
+        }
+
+        private List<EdgeState> computeTransitiveIncomingEdges(boolean hasIncomingEdges) {
+            List<EdgeState> transitiveIncoming = hasIncomingEdges ? Lists.<EdgeState>newArrayListWithExpectedSize(incomingEdges.size()) : Collections.<EdgeState>emptyList();
+            for (EdgeState edge : incomingEdges) {
+                if (edge.isTransitive()) {
+                    transitiveIncoming.add(edge);
                 }
             }
+            return transitiveIncoming;
         }
 
         private boolean isExcluded(ModuleExclusion selector, DependencyMetadata dependency) {
@@ -1410,6 +1391,63 @@ public class DependencyGraphBuilder {
 
         public boolean isPending() {
             return !noLongerOptional;
+        }
+    }
+
+    /**
+     * This class is responsible for maintaining the state of optional dependencies which are "pending".
+     * In other words, when an optional dependency is added to the graph, it is "pending" until a hard
+     * dependency for the same module is seen. As soon as a hard dependency is found, nodes that referred
+     * to the optional dependency are restarted.
+     *
+     * This class also makes a special case of the "optional" configuration, for backwards compatibility:
+     * the optional configuration used to store optional dependencies. But if we no longer resolve optional
+     * dependencies, then the optional configuration becomes effectively empty. To avoid this, we ignore the
+     * state of optional dependencies if they belong to the "optional" configuration.
+     */
+    private static class OptionalDependenciesHandler {
+        private final ResolveState resolveState;
+        private final boolean isOptionalConfiguration;
+        List<PendingOptionalDependencies> noLongerOptional;
+
+        public OptionalDependenciesHandler(ResolveState resolveState, boolean isOptionalConfiguration) {
+
+            this.resolveState = resolveState;
+            this.isOptionalConfiguration = isOptionalConfiguration;
+        }
+
+        boolean maybeAddAsOptionalDependency(NodeState node, DependencyMetadata dependency) {
+            ModuleVersionSelector requested = dependency.getRequested();
+            ModuleIdentifier key = DefaultModuleIdentifier.newId(
+                requested.getGroup(),
+                requested.getName()
+            );
+            PendingOptionalDependencies pendingOptionalDependencies = resolveState.optionalDependencies.get(key);
+            if (dependency.isOptional() && !isOptionalConfiguration) {
+                if (pendingOptionalDependencies == null || pendingOptionalDependencies.isPending()) {
+                    if (pendingOptionalDependencies == null) {
+                        pendingOptionalDependencies = new PendingOptionalDependencies();
+                        resolveState.optionalDependencies.put(key, pendingOptionalDependencies);
+                    }
+                    pendingOptionalDependencies.addNode(node);
+                    return true;
+                }
+            } else if (pendingOptionalDependencies != null && pendingOptionalDependencies.isPending()) {
+                if (noLongerOptional == null) {
+                    noLongerOptional = Lists.newLinkedList();
+                }
+                noLongerOptional.add(pendingOptionalDependencies);
+            }
+            resolveState.optionalDependencies.put(key, PendingOptionalDependencies.NOT_OPTIONAL);
+            return false;
+        }
+
+        public void complete() {
+            if (noLongerOptional != null) {
+                for (PendingOptionalDependencies optionalDependencies : noLongerOptional) {
+                    optionalDependencies.turnIntoHardDependencies();
+                }
+            }
         }
     }
 }
