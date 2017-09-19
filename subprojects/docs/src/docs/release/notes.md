@@ -86,6 +86,8 @@ The following are the newly deprecated items in this Gradle release. If you have
 ### Example deprecation
 -->
 
+- Chaining calls to `TaskInputs.property()` and `TaskInputs.properties()` is now deprecated, similar to how calls to `TaskInputs.file()` and `TaskOutputs.dir()` should not be chained since Gradle 3.0.
+
 ## Potential breaking changes
 
 ### Changes to incubating native compile and link tasks
