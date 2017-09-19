@@ -19,6 +19,7 @@ package org.gradle.internal.buildoption;
 import org.gradle.cli.CommandLineParser;
 import org.gradle.cli.ParsedCommandLine;
 
+import javax.annotation.Nullable;
 import java.util.Map;
 
 /**
@@ -34,6 +35,14 @@ public abstract class StringBuildOption<T> extends AbstractBuildOption<T> {
 
     public StringBuildOption(String gradleProperty, CommandLineOptionConfiguration... commandLineOptionConfigurations) {
         super(gradleProperty, commandLineOptionConfigurations);
+    }
+
+    @Nullable
+    public String getCommandLineOption() {
+        for (CommandLineOptionConfiguration config : commandLineOptionConfigurations) {
+            return config.getLongOption();
+        }
+        throw new IllegalStateException("Can't get command line option from " + getClass().getSimpleName());
     }
 
     @Override

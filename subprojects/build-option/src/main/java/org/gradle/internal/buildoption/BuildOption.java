@@ -16,6 +16,7 @@
 
 package org.gradle.internal.buildoption;
 
+import org.apache.commons.lang.StringUtils;
 import org.gradle.cli.CommandLineArgumentException;
 import org.gradle.cli.CommandLineParser;
 import org.gradle.cli.ParsedCommandLine;
@@ -42,19 +43,35 @@ public interface BuildOption<T> {
     enum Origin {
         GRADLE_PROPERTY {
             @Override
-            public void handleInvalidValue(String property, String option, String value, String hint) {
-                String message = String.format("Value '%s' given for %s Gradle property is invalid (%s)", value, property, hint);
+            public void handleInvalidValue(BuildOption<?> option, String value, String hint) {
+                String message = String.format("Value '%s' given for %s Gradle property is invalid%s.", value, option.getGradleProperty(), hintMessage(hint));
                 throw new IllegalArgumentException(message);
             }
         },
         COMMAND_LINE {
             @Override
-            public void handleInvalidValue(String property, String option, String value, String hint) {
-                String message = String.format("Argument value '%s' given for --%s option is invalid (%s)", value, option, hint);
+            public void handleInvalidValue(BuildOption<?> option, String value, String hint) {
+                if (!(option instanceof StringBuildOption)) {
+                    throw new IllegalStateException("Can't get command line from non StringBuildOption");
+                }
+                String commandLineOption = StringBuildOption.class.cast(option).getCommandLineOption();
+                String message = String.format("Argument value '%s' given for --%s option is invalid%s.", value, commandLineOption, hintMessage(hint));
                 throw new CommandLineArgumentException(message);
             }
         };
 
-        public abstract void handleInvalidValue(String property, String option, String value, String hint);
+        public abstract void handleInvalidValue(BuildOption<?> option, String value, String hint);
+
+        public void handleInvalidValue(BuildOption<?> option, String value) {
+            handleInvalidValue(option, value, null);
+        }
+
+        protected String hintMessage(String hint) {
+            if (StringUtils.isBlank(hint)) {
+                return "";
+            } else {
+                return String.format(" (%s)", hint);
+            }
+        }
     }
 }

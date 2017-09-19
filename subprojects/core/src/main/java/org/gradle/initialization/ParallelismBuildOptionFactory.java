@@ -67,11 +67,11 @@ public class ParallelismBuildOptionFactory implements Factory<List<BuildOption<P
             try {
                 int workerCount = Integer.parseInt(value);
                 if (workerCount < 1) {
-                    origin.handleInvalidValue(GRADLE_PROPERTY, LONG_OPTION, value, HINT);
+                    origin.handleInvalidValue(this, value, HINT);
                 }
                 settings.setMaxWorkerCount(workerCount);
             } catch (NumberFormatException e) {
-                origin.handleInvalidValue(GRADLE_PROPERTY, LONG_OPTION, value, HINT);
+                origin.handleInvalidValue(this, value, HINT);
             }
         }
     }

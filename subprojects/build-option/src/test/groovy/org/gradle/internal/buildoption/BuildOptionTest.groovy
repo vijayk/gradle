@@ -17,24 +17,65 @@
 package org.gradle.internal.buildoption
 
 import org.gradle.cli.CommandLineArgumentException
+import spock.lang.Shared
 import spock.lang.Specification
+import spock.lang.Unroll
 
 class BuildOptionTest extends Specification {
-    def "can handle invalid value for Gradle property"() {
+    private static final String VALUE = '0'
+    private static final String HINT = 'must be positive'
+
+    @Shared
+    StringBuildOption stringBuildOption = Mock(StringBuildOption)
+    @Shared
+    BuildOption nonStringBuildOption = Mock(BuildOption)
+
+    def setupSpec() {
+        stringBuildOption.getGradleProperty() >> 'org.gradle.property'
+        stringBuildOption.getCommandLineOption() >> 'option'
+        nonStringBuildOption.getGradleProperty() >> 'org.gradle.property'
+    }
+
+    @Unroll
+    def "can handle invalid value for Gradle property with empty #hint"() {
         when:
-        BuildOption.Origin.GRADLE_PROPERTY.handleInvalidValue('property', 'option', 'value', 'hint')
+        BuildOption.Origin.GRADLE_PROPERTY.handleInvalidValue(stringBuildOption, VALUE, hint)
 
         then:
         Throwable t = thrown(IllegalArgumentException)
-        t.message == "Value 'value' given for property Gradle property is invalid (hint)"
+        t.message == "Value '0' given for org.gradle.property Gradle property is invalid."
+
+        where:
+        hint << ['', ' ', null]
     }
 
-    def "can handle invalid value for command line option"() {
+    @Unroll
+    def "can handle invalid value for Gradle property with concrete hint"() {
         when:
-        BuildOption.Origin.COMMAND_LINE.handleInvalidValue('property', 'option', 'value', 'hint')
+        BuildOption.Origin.GRADLE_PROPERTY.handleInvalidValue(buildOption, VALUE, HINT)
+
+        then:
+        Throwable t = thrown(IllegalArgumentException)
+        t.message == "Value '0' given for org.gradle.property Gradle property is invalid (must be positive)."
+
+        where:
+        buildOption << [stringBuildOption, nonStringBuildOption]
+    }
+
+    def "can handle invalid value for command line option with concrete hint"() {
+        when:
+        BuildOption.Origin.COMMAND_LINE.handleInvalidValue(stringBuildOption, VALUE, HINT)
 
         then:
         Throwable t = thrown(CommandLineArgumentException)
-        t.message == "Argument value 'value' given for --option option is invalid (hint)"
+        t.message == "Argument value '0' given for --option option is invalid (must be positive)."
+    }
+
+    def "throws exception when handling non StringBuildOption's command line option"() {
+        when:
+        BuildOption.Origin.COMMAND_LINE.handleInvalidValue(nonStringBuildOption, VALUE, HINT)
+
+        then:
+        thrown(IllegalStateException)
     }
 }
