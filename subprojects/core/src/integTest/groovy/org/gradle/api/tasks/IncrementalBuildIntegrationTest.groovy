@@ -1264,4 +1264,33 @@ task generate(type: TransformerTask) {
         skipped(':taskWithInputs')
     }
 
+    @Issue('https://github.com/gradle/gradle/issues/1224')
+    def 'can change input properties dynamically'(){
+        given:
+        buildFile<<'''
+    class T extends DefaultTask{
+        @TaskAction
+        void processFiles(IncrementalTaskInputs inputs) {
+            inputs.outOfDate {println it}
+        }
+    }
+    
+    task myTask (type: T){
+        project.ext.inputDirs.split(',').each {inputs.dir(it)}
+    }
+'''
+
+        when:
+        args('-PinputDirs=a,b')
+
+        then:
+        succeeds('myTask')
+
+        when:
+        args('-PinputDirs=a')
+
+        then:
+        succeeds('myTask')
+    }
+
 }

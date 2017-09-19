@@ -35,7 +35,6 @@ public class TaskUpToDateState {
         TaskStateChanges noHistoryState = new NoHistoryTaskStateChanges(lastExecution);
         TaskStateChanges previousSuccessState = new PreviousSuccessTaskStateChanges(lastExecution, thisExecution, task);
         TaskStateChanges taskTypeState = new TaskTypeTaskStateChanges(lastExecution, thisExecution, task);
-        TaskStateChanges inputPropertiesState = new InputPropertiesTaskStateChanges(lastExecution, thisExecution, task);
 
         // Capture outputs state
         OutputFilesTaskStateChanges uncachedOutputChanges = new OutputFilesTaskStateChanges(lastExecution, thisExecution, task);
@@ -45,7 +44,10 @@ public class TaskUpToDateState {
         // Capture inputs state
         InputFilesTaskStateChanges directInputFileChanges = new InputFilesTaskStateChanges(lastExecution, thisExecution, task);
         TaskStateChanges inputFileChanges = caching(directInputFileChanges);
+        TaskStateChanges inputFilePropertiesChanges = caching(directInputFileChanges.filePropertiesChanges());
         this.inputFileChanges = new ErrorHandlingTaskStateChanges(task, inputFileChanges);
+
+        TaskStateChanges inputPropertiesState = new SummaryTaskStateChanges(1, new InputPropertiesTaskStateChanges(lastExecution, thisExecution, task), inputFilePropertiesChanges);
 
         // Capture discovered inputs state from previous execution
         DiscoveredInputsTaskStateChanges discoveredChanges = new DiscoveredInputsTaskStateChanges(lastExecution, thisExecution);

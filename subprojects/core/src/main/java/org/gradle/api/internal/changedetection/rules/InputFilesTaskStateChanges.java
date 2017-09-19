@@ -38,4 +38,13 @@ public class InputFilesTaskStateChanges extends AbstractNamedFileSnapshotTaskSta
     public Iterator<TaskStateChange> iterator() {
         return getFileChanges(true);
     }
+
+    public TaskStateChanges filePropertiesChanges() {
+        return new TaskStateChanges() {
+            @Override
+            public Iterator<TaskStateChange> iterator() {
+                return getFilePropertiesChange().iterator();
+            }
+        };
+    }
 }

@@ -23,6 +23,7 @@ import org.gradle.api.internal.changedetection.state.TaskExecution;
 
 import javax.annotation.Nullable;
 import java.util.Iterator;
+import java.util.List;
 
 public class OutputFilesTaskStateChanges extends AbstractNamedFileSnapshotTaskStateChanges {
 
@@ -37,10 +38,18 @@ public class OutputFilesTaskStateChanges extends AbstractNamedFileSnapshotTaskSt
 
     @Override
     public Iterator<TaskStateChange> iterator() {
-        return getFileChanges(false);
+        return iterator(false);
     }
 
     public boolean hasAnyChanges() {
-        return getFileChanges(true).hasNext();
+        return iterator(true).hasNext();
+    }
+
+    private Iterator<TaskStateChange> iterator(boolean includeAdded) {
+        List<TaskStateChange> filePropertiesChanges = getFilePropertiesChange();
+        if (!filePropertiesChanges.isEmpty()) {
+            return filePropertiesChanges.iterator();
+        }
+        return getFileChanges(includeAdded);
     }
 }
